@@ -6,9 +6,9 @@ services:
     container_name: chat-db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-28102005}
-      POSTGRES_DB: chatsystem_uts
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB:  ${DB_NAME}
     ports:
       - "127.0.0.1:5432:5432" 
     healthcheck:
