@@ -1,26 +1,26 @@
 name: mobile_flutter
-description: "A new Flutter project."
-publish_to: 'none' 
+description: "Flutter Chat App - UTS"
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.11.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  http: ^1.6.0
+  http: ^1.2.0
   web_socket_channel: ^3.0.3
   intl: ^0.20.2
   google_fonts: ^8.0.2
-  shared_preferences: ^2.3.2 
-  image_picker: ^1.1.2      
+  shared_preferences: ^2.3.2
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
