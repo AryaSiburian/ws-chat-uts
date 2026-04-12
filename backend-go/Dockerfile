@@ -1,14 +1,17 @@
-FROM golang:1.25-alpine
+FROM golang:1.24-alpine
 
-# Docker akan otomatis membuat folder /app DI DALAM kontainer
+# Tambahkan ini untuk menghindari masalah download toolchain
+ENV GOTOOLCHAIN=local 
+
 WORKDIR /app
 
-# Mengambil file dari laptop kamu (.), dimasukkan ke dalam /app di kontainer (.)
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN go build -o main main.go
+RUN go build -o main .
+
+EXPOSE 8080
 
 CMD ["./main"]
