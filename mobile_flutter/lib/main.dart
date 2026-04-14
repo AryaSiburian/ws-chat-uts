@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/splash_page.dart';
+import 'presentation/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,11 +14,14 @@ class MyApp extends StatelessWidget {
       title: 'WebSystem',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1B263B), 
+          brightness: Brightness.dark, // Agar UTS-mu terlihat modern dengan Dark Mode
+        ),
         useMaterial3: true,
       ),
       // Halaman pertama yang dibuka adalah SplashPage
-      home: const SplashPage(),
+      home: const SplashScreen(),
       routes: {
         '/home': (context) => const PlaceholderHomePage(),
       },

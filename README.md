@@ -32,3 +32,16 @@ Project ini mengimplementasikan dua jenis index pada PostgreSQL untuk dibandingk
 2. Jalankan perintah berikut di terminal:
    ```bash
    docker compose up --build
+
+
+STRUKTUR FOLDER FRONT END
+lib/
+├── core/               # Helper, konstanta, theme, dan konfigurasi WebSocket
+├── data/               # Urusan data: Model dan Provider/Service
+│   ├── models/         # File class Message (JSON parsing)
+│   └── services/       # Logic WebSocket (Connect, Disconnect, Sink)
+├── logic/              # Tempat BLoC kamu berada
+│   └── chat_bloc/      # Bloc, Event, dan State untuk Chat
+└── presentation/       # Urusan UI (Widget dan Screen)
+    ├── screens/        # Halaman utama (ChatScreen, LoginScreen)
+    └── widgets/        # Komponen kecil (ChatBubble, InputBar)
