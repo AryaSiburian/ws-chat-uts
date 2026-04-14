@@ -27,7 +27,7 @@ func GetEnv(key string) string {
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := "host=localhost user=postgres password=28102005 dbname=chatsystem_uts port=5432 sslmode=disable"
+	dsn := "host=chat-db user=postgres password=28102005 dbname=chatsystem_uts port=5432 sslmode=disable"
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	database.AutoMigrate(&models.User{})
 	if err != nil {
