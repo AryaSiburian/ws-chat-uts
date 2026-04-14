@@ -34,14 +34,21 @@ Project ini mengimplementasikan dua jenis index pada PostgreSQL untuk dibandingk
    docker compose up --build
 
 
-STRUKTUR FOLDER FRONT END
-lib/
-├── core/               # Helper, konstanta, theme, dan konfigurasi WebSocket
-├── data/               # Urusan data: Model dan Provider/Service
-│   ├── models/         # File class Message (JSON parsing)
-│   └── services/       # Logic WebSocket (Connect, Disconnect, Sink)
-├── logic/              # Tempat BLoC kamu berada
-│   └── chat_bloc/      # Bloc, Event, dan State untuk Chat
-└── presentation/       # Urusan UI (Widget dan Screen)
-    ├── screens/        # Halaman utama (ChatScreen, LoginScreen)
-    └── widgets/        # Komponen kecil (ChatBubble, InputBar)
+📱 Frontend (Flutter)
+Folder lib/ disusun berdasarkan tanggung jawab masing-masing komponen:
+
+core/: Jantung aplikasi yang berisi helper, konstanta, konfigurasi theme, dan setup dasar WebSocket.
+
+data/: Mengelola sumber data. Terdiri dari models (untuk JSON parsing) dan services (logika koneksi WebSocket).
+
+logic/: Lapisan state management. Berisi file BLoC (Business Logic Component) untuk mengatur aliran data aplikasi.
+
+presentation/: Lapisan UI. Berisi screens (halaman utama) dan widgets (komponen UI kecil yang bisa digunakan ulang).
+
+Selain folder lib/, terdapat folder pendukung aset:
+
+assets/: Penyimpanan file statis aplikasi.
+
+animations/: Tempat menyimpan file JSON animasi (Lottie).
+
+images/: Tempat menyimpan aset gambar, logo, atau ikon.

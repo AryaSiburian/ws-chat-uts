@@ -1,47 +1,67 @@
 package main
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
+	"backend-go/config"
+	"backend-go/routers"
 
-	_ "github.com/lib/pq"
-	"github.com/redis/go-redis/v9"
+	// "context"
+	"log"
+
+	_ "backend-go/docs"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	swagger "github.com/swaggo/fiber-swagger"
 )
 
-var ctx = context.Background()
+// var ctx = context.Background()
 
 func main() {
-	// 1. Test Koneksi Postgres
-	dbHost := os.Getenv("DB_HOST")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPass, dbName)
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil || db.Ping() != nil {
-		log.Fatalf("Gagal konek Postgres: %v", err)
-	}
-	fmt.Println("✅ Terhubung ke PostgreSQL!")
-
-	// 2. Test Koneksi Redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
-	})
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Gagal konek Redis: %v", err)
-	}
-	fmt.Println("✅ Terhubung ke Redis!")
-
-	// 3. Server Sederhana
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Backend Chat System Is Running!")
+	config.LoadEnv()
+	config.ConnectDatabase()
+	// 2. Inisialisasi Fiber App
+	app := fiber.New(fiber.Config{
+		AppName: "E-Library API v1.0",
 	})
 
-	fmt.Println("🚀 Server jalan di port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	app.Use(logger.New())
+
+	routers.SetupRoutes(app)
+
+	// 5. Route Khusus untuk Swagger UI
+	// Akses di: http://localhost:3001/swagger/index.html
+	app.Get("/swagger/*", swagger.WrapHandler)
+
+	// 6. Redirect halaman utama ke Swagger (Opsional tapi membantu)
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.Redirect("/swagger/index.html")
+	})
+
+	// 7. Jalankan Server
+	log.Println("🚀 Server running on http://localhost:3001")
+	log.Fatal(app.Listen(":3001"))
+
+	// // 2. Test Koneksi Redis
+	// redisHost := os.Getenv("REDIS_HOST")
+	// if redisHost == "" {
+	// 	redisHost = "localhost"
+	// }
+
+	// rdb := redis.NewClient(&redis.Options{
+	// 	Addr: fmt.Sprintf("%s:6379", redisHost),
+	// })
+
+	// if err := rdb.Ping(ctx).Err(); err != nil {
+	// 	log.Printf("⚠️ Redis belum aktif: %v", err)
+	// } else {
+	// 	fmt.Println("✅ Terhubung ke Redis!")
+	// }
+
+	// // 3. Server Sederhana
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Fprintf(w, "Backend Chat System Is Running!")
+	// })
+
+	// fmt.Println("🚀 Server jalan di port 8080")
+	// log.Fatal(http.ListenAndServe(":8080", nil))
 }

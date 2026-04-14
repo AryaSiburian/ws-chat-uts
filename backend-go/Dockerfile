@@ -1,7 +1,7 @@
-FROM golang:1.24-alpine
+FROM golang:1.25-alpine
 
 # Tambahkan ini untuk menghindari masalah download toolchain
-ENV GOTOOLCHAIN=local 
+ENV GOPROXY=https://proxy.golang.org,direct
 
 WORKDIR /app
 
