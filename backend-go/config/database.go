@@ -1,7 +1,7 @@
 package config
 
 import (
-	models "backend-go/model"
+	model "backend-go/model"
 	"fmt"
 	"log"
 	"os"
@@ -27,14 +27,28 @@ func GetEnv(key string) string {
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	dsn := "host=chat-db user=postgres password=28102005 dbname=chatsystem_uts port=5432 sslmode=disable"
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		host, user, password, dbname, port,
+	)
+
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	database.AutoMigrate(&models.User{})
+
 	if err != nil {
 		log.Fatal("Gagal terhubung ke database: ", err)
-	} else {
-		fmt.Println("Berhasil terhubung ke database PostgreSQL!")
 	}
+
+	fmt.Println("Berhasil terhubung ke database PostgreSQL!")
+	fmt.Println("DB_HOST:", host)
+	fmt.Println("DB_PORT:", port)
+
+	database.AutoMigrate(&model.User{})
 
 	DB = database
 }

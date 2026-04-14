@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"backend-go/model"
-	models "backend-go/model"
 	"time"
 
 	"backend-go/config"
@@ -18,14 +17,14 @@ import (
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        user  body    models.RegisterRequest  true  "Username & Password"
+// @Param        user  body    model.RegisterRequest  true  "Username & Password"
 // @Success      201   {object}  map[string]string
 // @Router /api/auth/register [post]
 func Register(c *fiber.Ctx) error {
 	var user model.User
 
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(400).JSON(models.ErrorResponse{Message: "Invalid request body"})
+		return c.Status(400).JSON(model.ErrorResponse{Message: "Invalid request body"})
 	}
 
 	hashedPassowrd, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -48,7 +47,7 @@ func Register(c *fiber.Ctx) error {
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        login  body      models.LoginRequest  true  "Username & Password"
+// @Param        login  body      model.LoginRequest  true  "Username & Password"
 // @Success      200    {object}  map[string]string
 // @Router /api/auth/login [post]
 func Login(c *fiber.Ctx) error {

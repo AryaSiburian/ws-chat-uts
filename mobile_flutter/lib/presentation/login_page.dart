@@ -73,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() => _error = data['Message'] ?? data['message'] ?? 'Login gagal');
       }
     } catch (e) {
-      setState(() => _error = 'Tidak bisa terhubung ke server.\nPastikan Docker sudah berjalan.');
+      setState(() => _error = 'Terjadi Kesalahan Koneksi.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

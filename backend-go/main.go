@@ -6,6 +6,7 @@ import (
 
 	// "context"
 	"log"
+	"os"
 
 	_ "backend-go/docs"
 
@@ -37,9 +38,13 @@ func main() {
 		return c.Redirect("/swagger/index.html")
 	})
 
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
 	// 7. Jalankan Server
-	log.Println("🚀 Server running on http://localhost:3001")
-	log.Fatal(app.Listen(":3001"))
+	log.Println("🚀 Server running on http://localhost:" + port)
+	log.Fatal(app.Listen(":" + port))
 
 	// // 2. Test Koneksi Redis
 	// redisHost := os.Getenv("REDIS_HOST")
