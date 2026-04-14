@@ -2,7 +2,7 @@ services:
   # DATABASE
   db:
     image: postgres:16-alpine
-    container_name: chat-db
+    container_name: chat-db 
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}

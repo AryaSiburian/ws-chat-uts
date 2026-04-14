@@ -82,7 +82,7 @@ class _RegisterPageState extends State<RegisterPage> {
         setState(() => _error = data['Message'] ?? data['message'] ?? 'Pendaftaran gagal');
       }
     } catch (e) {
-      setState(() => _error = 'Tidak bisa terhubung ke server.\nPastikan Docker sudah berjalan.');
+      setState(() => _error = 'Terjadi Kesalahan Koneksi.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
