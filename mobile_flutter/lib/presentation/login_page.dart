@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register_page.dart';
+import 'chat_dashboard_screen.dart';
 
 const kSignalBlue  = Color(0xFF2C6BED);
 const kBackground  = Color(0xFFFFFFFF);
@@ -68,6 +69,13 @@ class _LoginPageState extends State<LoginPage> {
             backgroundColor: kSignalBlue,
           ),
         );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ChatDashboardScreen(),
+          ),
+          (route) => false,
+        );
       } else {
         // Tampilkan pesan error dari backend
         setState(() => _error = data['Message'] ?? data['message'] ?? 'Login gagal');
@@ -77,7 +85,8 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
+  } 
+
 
   @override
   Widget build(BuildContext context) {

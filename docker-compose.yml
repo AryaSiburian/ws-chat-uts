@@ -47,12 +47,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
+      # Gunakan nama service (db/redis) sebagai HOST agar terhubung via network internal
       DB_HOST: db
       DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       APP_PORT: 8080
