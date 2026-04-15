@@ -1,13 +1,10 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/theme_config.dart'; // IMPORT INI UNTUK FIX ERROR
 
-const kSignalBlue  = Color(0xFF2C6BED);
-const kBackground  = Color(0xFFFFFFFF);
-const kTextDark    = Color(0xFF1B1B1B);
-const kTextGrey    = Color(0xFF8696A0);
-const kInputBorder = Color(0xFFD1D7DB);
-const kBaseUrl     = 'http://localhost:8080';
+const kBaseUrl = 'http://localhost:8080';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,236 +13,121 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _usernameCtrl = TextEditingController();
-  final _emailCtrl    = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _confirmCtrl  = TextEditingController();
-  bool    _hidePwd     = true;
-  bool    _hideConfirm = true;
-  bool    _loading     = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _usernameCtrl.dispose();
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    _confirmCtrl.dispose();
-    super.dispose();
-  }
+  final _userCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  bool _loading = false;
 
   Future<void> _register() async {
-    // Validasi
-    if (_usernameCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'Username wajib diisi');
-      return;
-    }
-    if (!_emailCtrl.text.contains('@')) {
-      setState(() => _error = 'Format email tidak valid');
-      return;
-    }
-    if (_passwordCtrl.text.length < 8) {
-      setState(() => _error = 'Password minimal 8 karakter');
-      return;
-    }
-    if (_passwordCtrl.text != _confirmCtrl.text) {
-      setState(() => _error = 'Password tidak cocok');
-      return;
-    }
-
-    setState(() { _loading = true; _error = null; });
-
+    setState(() => _loading = true);
     try {
-      // POST /api/auth/register — sesuai routes.go temanmu
-      final res = await http.post(
+      final response = await http.post(
         Uri.parse('$kBaseUrl/api/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'username': _usernameCtrl.text.trim(),
-          'email':    _emailCtrl.text.trim(),
-          'password': _passwordCtrl.text,
+          'username': _userCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+          'password': _passCtrl.text,
         }),
       );
-
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-
-      if (res.statusCode == 201) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Akun berhasil dibuat! Silakan login.'),
-            backgroundColor: kSignalBlue,
-          ),
-        );
-        Navigator.pop(context); // kembali ke login
-      } else {
-        setState(() => _error = data['Message'] ?? data['message'] ?? 'Pendaftaran gagal');
+      if (response.statusCode == 201) {
+        if (mounted) Navigator.pop(context);
       }
     } catch (e) {
-      setState(() => _error = 'Terjadi Kesalahan Koneksi.');
+      debugPrint(e.toString());
     } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackground,
-      appBar: AppBar(
-        backgroundColor: kBackground,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kTextDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72, height: 72,
-                  decoration: const BoxDecoration(
-                    color: kSignalBlue, shape: BoxShape.circle,
+    return ValueListenableBuilder<bool>(
+      valueListenable: isDarkMode,
+      builder: (context, dark, child) {
+        return Scaffold(
+          body: Stack(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: dark 
+                      ? [const Color(0xFF232526), const Color(0xFF414345)]
+                      : [const Color(0xFFFFFFFF), const Color(0xFFECE9E6)],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
                   ),
-                  child: const Icon(Icons.person_add_rounded,
-                      color: Colors.white, size: 36),
                 ),
-                const SizedBox(height: 20),
-
-                const Text('Buat Akun', style: TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.w700, color: kTextDark)),
-                const SizedBox(height: 8),
-                const Text('Daftar untuk mulai mengobrol',
-                    style: TextStyle(fontSize: 14, color: kTextGrey)),
-                const SizedBox(height: 36),
-
-                // Username
-                TextField(
-                  controller: _usernameCtrl,
-                  decoration: _inputStyle('Username'),
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 14),
-
-                // Email
-                TextField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _inputStyle('Email'),
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 14),
-
-                // Password
-                TextField(
-                  controller: _passwordCtrl,
-                  obscureText: _hidePwd,
-                  decoration: _inputStyle('Password (min. 8 karakter)').copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(_hidePwd
-                          ? Icons.visibility_off : Icons.visibility,
-                          color: kTextGrey),
-                      onPressed: () => setState(() => _hidePwd = !_hidePwd),
+              ),
+              Center(
+                child: SingleChildScrollView(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        width: 400,
+                        padding: const EdgeInsets.all(40),
+                        decoration: BoxDecoration(
+                          color: dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: dark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Join Us', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: dark ? Colors.white : Colors.black87)),
+                            const SizedBox(height: 25),
+                            _buildField(_userCtrl, 'Username', Icons.person, dark),
+                            const SizedBox(height: 15),
+                            _buildField(_emailCtrl, 'Email', Icons.email, dark),
+                            const SizedBox(height: 15),
+                            _buildField(_passCtrl, 'Password', Icons.lock, dark, obscure: true),
+                            const SizedBox(height: 30),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton(
+                                onPressed: _loading ? null : _register,
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.cyan.shade700),
+                                child: _loading 
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text('CREATE ACCOUNT', style: TextStyle(color: Colors.white)),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Back to Login', style: TextStyle(color: dark ? Colors.cyanAccent : Colors.indigo)),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: 14),
-
-                // Konfirmasi password
-                TextField(
-                  controller: _confirmCtrl,
-                  obscureText: _hideConfirm,
-                  decoration: _inputStyle('Konfirmasi Password').copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(_hideConfirm
-                          ? Icons.visibility_off : Icons.visibility,
-                          color: kTextGrey),
-                      onPressed: () =>
-                          setState(() => _hideConfirm = !_hideConfirm),
-                    ),
-                  ),
-                  onSubmitted: (_) => _register(),
-                ),
-
-                // Error
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(_error!,
-                          style: const TextStyle(color: Colors.red, fontSize: 13))),
-                    ]),
-                  ),
-                ],
-                const SizedBox(height: 24),
-
-                // Tombol daftar
-                SizedBox(
-                  width: double.infinity, height: 50,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kSignalBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
-                    ),
-                    child: _loading
-                        ? const SizedBox(width: 20, height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Text('Daftar', style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Text('Sudah punya akun? ',
-                      style: TextStyle(color: kTextGrey)),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text('Masuk', style: TextStyle(
-                        color: kSignalBlue, fontWeight: FontWeight.w600)),
-                  ),
-                ]),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
-  InputDecoration _inputStyle(String label) {
-    return InputDecoration(
-      hintText: label,
-      hintStyle: const TextStyle(color: kTextGrey),
-      filled: true,
-      fillColor: const Color(0xFFF8F9FA),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: kInputBorder)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: kInputBorder)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: kSignalBlue, width: 1.5)),
+  Widget _buildField(TextEditingController ctrl, String label, IconData icon, bool dark, {bool obscure = false}) {
+    return TextField(
+      controller: ctrl,
+      obscureText: obscure,
+      style: TextStyle(color: dark ? Colors.white : Colors.black87),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: dark ? Colors.white70 : Colors.black54),
+        hintText: label,
+        hintStyle: TextStyle(color: dark ? Colors.white38 : Colors.black38),
+        filled: true,
+        fillColor: dark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: dark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Colors.cyan)),
+      ),
     );
   }
 }

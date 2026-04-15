@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'presentation/splash_screen.dart';
+import 'presentation/login_page.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -14,10 +14,10 @@ class MyApp extends StatelessWidget {
       title: 'Signal',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2C6BED)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1D62F0)),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const LoginPage(), 
     );
   }
 }
