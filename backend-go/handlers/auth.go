@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"backend-go/model"
+	// "net/http"
+	"strings"
 	"time"
 
 	"backend-go/config"
@@ -24,21 +26,43 @@ func Register(c *fiber.Ctx) error {
 	var user model.User
 
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(400).JSON(model.ErrorResponse{Message: "Invalid request body"})
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Format data tidak valid",
+		})
 	}
 
-	hashedPassowrd, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	user.Password = string(hashedPassowrd)
+	if strings.TrimSpace(user.Username) == "" {
+		return c.Status(400).JSON(fiber.Map{"Message": "Username tidak boleh kosong"})
+	}
 
+	if !strings.Contains(user.Email, "@") {
+		return c.Status(400).JSON(fiber.Map{"message": "Format email tidak valid, harus mengandung @"})
+	}
+
+	if len(user.Password) < 8 {
+		return c.Status(400).JSON(fiber.Map{"message": "Password minimal 8 karakter"})
+	}
+
+	var existingUser model.User
+	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		return c.Status(409).JSON(fiber.Map{"message": "Email sudah terdaftar"})
+	}
+
+	if err := config.DB.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
+		return c.Status(409).JSON(fiber.Map{"message": "Username sudah digunakan"})
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Password gagal di hash"})
+		return c.Status(500).JSON(fiber.Map{"message": "Password gagal di hash"})
 	}
+	user.Password = string(hashedPassword)
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Gagal dimasukin db"})
+		return c.Status(500).JSON(fiber.Map{"message": "Gagal disimpan ke database"})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"Message": "Email Berhasil Terdaftar"})
+	return c.Status(201).JSON(fiber.Map{"message": "Email Berhasil Terdaftar"})
 }
 
 // Login godoc
@@ -55,28 +79,39 @@ func Login(c *fiber.Ctx) error {
 	var user model.User
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Gagal Parsing Data"})
+		return c.Status(400).JSON(fiber.Map{"message": "Gagal Parsing Data"})
 	}
 
-	if err := config.DB.Where("Email=?", req.Email).First(&user).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Gagal Menemukan Email"})
+	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Email tidak ditemukan"})
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Pasword tidak cocok"})
+	if !strings.Contains(req.Email, "@") {
+		return c.Status(400).JSON(fiber.Map{"message": "Format email tidak valid"})
+	}
+
+	if strings.TrimSpace(req.Email) == "" {
+		return c.Status(400).JSON(fiber.Map{"message": "Email tidak boleh kosong"})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Password Salah"})
+	}
+
+	if strings.TrimSpace(req.Password) == "" {
+		return c.Status(400).JSON(fiber.Map{"message": "Password tidak boleh kosong"})
 	}
 
 	claims := jwt.MapClaims{
-		"user_id ": user.ID,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(),
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secretkey := config.GetEnv("JWT_SECRET")
 	t, err := token.SignedString([]byte(secretkey))
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Gagal membuat token"})
+		return c.Status(500).JSON(fiber.Map{"message": "Gagal membuat token"})
 	}
 
 	return c.JSON(fiber.Map{

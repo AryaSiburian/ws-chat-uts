@@ -9,13 +9,14 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func LoadEnv() {
 	// Membaca file .env
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Warning: .env file not found, using environment variables")
 	}
 }
 
@@ -38,7 +39,16 @@ func ConnectDatabase() {
 		host, user, password, dbname, port,
 	)
 
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			LogLevel: logger.Info,
+		},
+	)
+
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: newLogger,
+	})
 
 	if err != nil {
 		log.Fatal("Gagal terhubung ke database: ", err)
