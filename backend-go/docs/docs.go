@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/auth/login": {
             "post": {
-                "description": "Masukan username \u0026 password untuk mendapatkan token JWT",
+                "description": "Endpoint untuk login",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,11 +27,11 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Login User",
+                "summary": "Login user",
                 "parameters": [
                     {
-                        "description": "Username \u0026 Password",
-                        "name": "login",
+                        "description": "Data Login",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -43,10 +43,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/model.SuccessResponse"
                         }
                     }
                 }
@@ -54,7 +51,7 @@ const docTemplate = `{
         },
         "/api/auth/register": {
             "post": {
-                "description": "Membuat akun baru untuk mengakses API yang diproteksi",
+                "description": "Endpoint untuk registrasi",
                 "consumes": [
                     "application/json"
                 ],
@@ -64,10 +61,10 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Daftar User WebSystem",
+                "summary": "Register user baru",
                 "parameters": [
                     {
-                        "description": "Username \u0026 Password",
+                        "description": "Data User",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -80,10 +77,161 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users": {
+            "get": {
+                "description": "Mengembalikan daftar semua user yang terdaftar",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Ambil semua user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserResponse"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/{id}": {
+            "get": {
+                "description": "Mengembalikan data 1 user berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Ambil user berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Mengupdate username dan/atau email user berdasarkan ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update data user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data yang diupdate",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Menghapus user berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Hapus user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
                         }
                     }
                 }
@@ -91,6 +239,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "model.LoginRequest": {
             "type": "object",
             "required": [
@@ -120,6 +276,44 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "baru@email.com"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "userbaru"
+                }
+            }
+        },
+        "model.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"

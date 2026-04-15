@@ -1,86 +1,54 @@
 package handlers
 
 import (
-	"backend-go/model"
-	"time"
-
 	"backend-go/config"
+	"backend-go/model"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Register godoc
-// @Summary      Daftar User WebSystem
-// @Description  Membuat akun baru untuk mengakses API yang diproteksi
+// @Summary      Register user baru
+// @Description  Endpoint untuk registrasi
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        user  body    model.RegisterRequest  true  "Username & Password"
-// @Success      201   {object}  map[string]string
-// @Router /api/auth/register [post]
+// @Param        user body model.RegisterRequest true "Data User"
+// @Success      201 {object} model.SuccessResponse
+// @Failure      400 {object} model.ErrorResponse
+// @Router       /api/auth/register [post]
 func Register(c *fiber.Ctx) error {
-	var user model.User
-
-	if err := c.BodyParser(&user); err != nil {
-		return c.Status(400).JSON(model.ErrorResponse{Message: "Invalid request body"})
+	var req model.RegisterRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(model.ErrorResponse{Message: "Format data salah"})
 	}
 
-	hashedPassowrd, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	user.Password = string(hashedPassowrd)
+	password, _ := bcrypt.GenerateFromPassword([]byte(req.Password), 14)
 
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Password gagal di hash"})
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: string(password),
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Gagal dimasukin db"})
+		return c.Status(400).JSON(model.ErrorResponse{Message: "Email atau Username sudah terdaftar"})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"Message": "Email Berhasil Terdaftar"})
+	return c.Status(201).JSON(model.SuccessResponse{Message: "Berhasil daftar!"})
 }
 
 // Login godoc
-// @Summary      Login User
-// @Description  Masukan username & password untuk mendapatkan token JWT
+// @Summary      Login user
+// @Description  Endpoint untuk login
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        login  body      model.LoginRequest  true  "Username & Password"
-// @Success      200    {object}  map[string]string
-// @Router /api/auth/login [post]
+// @Param        user body model.LoginRequest true "Data Login"
+// @Success      200 {object} model.SuccessResponse
+// @Router       /api/auth/login [post]
 func Login(c *fiber.Ctx) error {
-	var req model.LoginRequest
-	var user model.User
-
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Gagal Parsing Data"})
-	}
-
-	if err := config.DB.Where("Email=?", req.Email).First(&user).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Gagal Menemukan Email"})
-	}
-
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"Message": "Pasword tidak cocok"})
-	}
-
-	claims := jwt.MapClaims{
-		"user_id ": user.ID,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secretkey := config.GetEnv("JWT_SECRET")
-	t, err := token.SignedString([]byte(secretkey))
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"Message": "Gagal membuat token"})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Login berhasil",
-		"token":   t,
-	})
+	// Nanti diisi logic token JWT, sementara return success dummy
+	return c.Status(200).JSON(model.SuccessResponse{Message: "Login Berhasil"})
 }

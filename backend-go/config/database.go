@@ -1,7 +1,7 @@
 package config
 
 import (
-	model "backend-go/model"
+	models "backend-go/model"
 	"fmt"
 	"log"
 	"os"
@@ -12,14 +12,13 @@ import (
 )
 
 func LoadEnv() {
-	// Membaca file .env
+	// Kita ganti log.Fatal menjadi log.Println agar aplikasi tidak mati di dalam Docker
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("⚠️ .env file tidak ditemukan, menggunakan environment dari Docker")
 	}
 }
 
-// Fungsi untuk ambil value biar rapi
 func GetEnv(key string) string {
 	return os.Getenv(key)
 }
@@ -27,28 +26,40 @@ func GetEnv(key string) string {
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	host := GetEnv("DB_HOST")
+	user := GetEnv("DB_USER")
+	password := GetEnv("DB_PASSWORD")
+	dbname := GetEnv("DB_NAME")
+	port := GetEnv("DB_PORT")
+
+	// Default fallback agar tetap jalan walau tanpa .env
+	if host == "" {
+		host = "localhost"
+	}
+	if user == "" {
+		user = "postgres"
+	}
+	if password == "" {
+		password = "chatpassword"
+	} // Sesuaikan password-mu jika berbeda
+	if dbname == "" {
+		dbname = "chatdb"
+	}
+	if port == "" {
+		port = "5432"
+	}
 
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
 		host, user, password, dbname, port,
 	)
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
 	if err != nil {
-		log.Fatal("Gagal terhubung ke database: ", err)
+		log.Fatal("❌ Gagal terhubung ke database: ", err)
 	}
 
-	fmt.Println("Berhasil terhubung ke database PostgreSQL!")
-	fmt.Println("DB_HOST:", host)
-	fmt.Println("DB_PORT:", port)
-
-	database.AutoMigrate(&model.User{})
-
+	database.AutoMigrate(&models.User{})
+	fmt.Println("✅ Berhasil terhubung ke database PostgreSQL!")
 	DB = database
 }
