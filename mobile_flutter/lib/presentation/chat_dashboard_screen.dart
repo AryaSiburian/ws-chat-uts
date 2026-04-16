@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mobile_flutter/model/chat_user.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart'; 
+import 'dart:io' show Platform;
 import 'setting_page.dart';
 import '../theme/theme_controller.dart';
+import '../services/api_client.dart';
 
 // ─── WARNA SIGNAL ────────────────────────────────────────────────────────────
 const _kBlue        = Color(0xFF2C6BED);
@@ -18,6 +22,53 @@ class ChatDashboardScreen extends StatefulWidget {
 
 class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   int _selectedIndex = 0;
+  WebSocketChannel? _channel;
+
+  @override
+  void initState() {
+    super.initState();
+    _initWS(); // Panggil fungsi koneksi WebSocket
+  }
+
+  void _initWS() async {
+    try {
+      final cookieString = await ApiClient().getCookieHeader();
+      print("🕵️ CEK COOKIE DI LINUX: $cookieString");
+      
+      // LOGIKA OTOMATIS: Android pakai 10.0.2.2, Linux/Windows pakai 127.0.0.1
+      String ipAddress = Platform.isAndroid ? "10.0.2.2" : "127.0.0.1";
+      final wsUrl = Uri.parse("ws://$ipAddress:8080/ws"); 
+      
+      // Menggunakan IOWebSocketChannel untuk melempar Cookie (Khusus Linux/Android/iOS)
+      _channel = IOWebSocketChannel.connect(
+        wsUrl,
+        headers: {
+          if (cookieString != null && cookieString.isNotEmpty) 'Cookie': cookieString,
+        },
+      );
+
+      _channel?.stream.listen(
+        (message) {
+          print("Pesan masuk dari WS: $message");
+          // Logic update list chat atau database nanti bisa ditaruh di sini
+        },
+        onError: (error) {
+          print("Error WebSocket: $error");
+        },
+        onDone: () {
+          print("Koneksi WebSocket terputus.");
+        }
+      );
+    } catch (e) {
+      print("Gagal inisialisasi WebSocket: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
 
   void _onNavTap(int index) {
     if (index == 2) {

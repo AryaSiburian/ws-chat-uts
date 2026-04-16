@@ -16,7 +16,7 @@ type User struct {
 type Profile struct {
 	ID       uuid.UUID `gorm:"type:uuid;primaryKey"`
 	UserID   uuid.UUID `gorm:"type:uuid;uniqueIndex"`
-	Username string    `gorm:"unique"; "not null"`
+	Username string    `gorm:"unique;not null"` // <-- INI YANG TYPO SEBELUMNYA SUDAH DIPERBAIKI
 	Bio      string
 	Avatar   string
 }
