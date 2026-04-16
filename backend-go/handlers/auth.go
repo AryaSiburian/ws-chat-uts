@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,48 +22,79 @@ import (
 // @Produce      json
 // @Param        user  body    model.RegisterRequest  true  "Username & Password"
 // @Success      201   {object}  map[string]string
-// @Router /api/auth/register [post]
+// @Router /auth/register [post]
 func Register(c *fiber.Ctx) error {
-	var user model.User
+	var req model.RegisterRequest
 
-	if err := c.BodyParser(&user); err != nil {
+	// 1. parse request
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"message": "Format data tidak valid",
 		})
 	}
 
-	if strings.TrimSpace(user.Username) == "" {
-		return c.Status(400).JSON(fiber.Map{"Message": "Username tidak boleh kosong"})
+	// 2. validation
+	if strings.TrimSpace(req.Username) == "" {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Username tidak boleh kosong",
+		})
 	}
 
-	if !strings.Contains(user.Email, "@") {
-		return c.Status(400).JSON(fiber.Map{"message": "Format email tidak valid, harus mengandung @"})
+	if !strings.Contains(req.Email, "@") {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Format email tidak valid",
+		})
 	}
 
-	if len(user.Password) < 8 {
-		return c.Status(400).JSON(fiber.Map{"message": "Password minimal 8 karakter"})
+	if len(req.Password) < 8 {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Password minimal 8 karakter",
+		})
 	}
 
+	// 3. check email exist
 	var existingUser model.User
-	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
-		return c.Status(409).JSON(fiber.Map{"message": "Email sudah terdaftar"})
+	if err := config.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
+		return c.Status(409).JSON(fiber.Map{
+			"message": "Email sudah terdaftar",
+		})
 	}
 
-	if err := config.DB.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
-		return c.Status(409).JSON(fiber.Map{"message": "Username sudah digunakan"})
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	// 4. hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Password gagal di hash"})
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Password gagal di hash",
+		})
 	}
-	user.Password = string(hashedPassword)
+
+	// 5. CREATE USER + UUID
+	user := model.User{
+		ID:       uuid.New(), // 👈 INI UUID NYA
+		Email:    req.Email,
+		Password: string(hashedPassword),
+	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Gagal disimpan ke database"})
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Gagal membuat user",
+		})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"message": "Email Berhasil Terdaftar"})
+	// 6. CREATE PROFILE
+	profile := model.Profile{
+		ID:       uuid.New(), // optional tapi bagus
+		UserID:   user.ID,
+		Username: req.Username,
+	}
+
+	config.DB.Create(&profile)
+
+	// 7. response
+	return c.Status(201).JSON(fiber.Map{
+		"message": "Register berhasil",
+		"user_id": user.ID,
+	})
 }
 
 // Login godoc
@@ -73,33 +105,45 @@ func Register(c *fiber.Ctx) error {
 // @Produce      json
 // @Param        login  body      model.LoginRequest  true  "Username & Password"
 // @Success      200    {object}  map[string]string
-// @Router /api/auth/login [post]
+// @Router /auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
 	var user model.User
 
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"message": "Gagal Parsing Data"})
-	}
-
-	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		return c.Status(400).JSON(fiber.Map{"message": "Email tidak ditemukan"})
-	}
-
-	if !strings.Contains(req.Email, "@") {
-		return c.Status(400).JSON(fiber.Map{"message": "Format email tidak valid"})
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Gagal parsing data",
+		})
 	}
 
 	if strings.TrimSpace(req.Email) == "" {
-		return c.Status(400).JSON(fiber.Map{"message": "Email tidak boleh kosong"})
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Email tidak boleh kosong",
+		})
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return c.Status(400).JSON(fiber.Map{"message": "Password Salah"})
+	if !strings.Contains(req.Email, "@") {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Format email tidak valid",
+		})
 	}
 
 	if strings.TrimSpace(req.Password) == "" {
-		return c.Status(400).JSON(fiber.Map{"message": "Password tidak boleh kosong"})
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Password tidak boleh kosong",
+		})
+	}
+
+	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Email tidak ditemukan",
+		})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Password salah",
+		})
 	}
 
 	claims := jwt.MapClaims{
@@ -108,14 +152,103 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	secretkey := config.GetEnv("JWT_SECRET")
 	t, err := token.SignedString([]byte(secretkey))
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"message": "Gagal membuat token"})
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Gagal membuat token",
+		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "Login berhasil",
 		"token":   t,
+	})
+}
+
+// GetMyProfile godoc
+// @Summary      Get My Profile
+// @Description  Mengambil data profile user yang sedang login (berdasarkan JWT)
+// @Tags         Profile
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  model.ProfileResponse
+// @Failure      401  {object}  model.ErrorResponse
+// @Failure      404  {object}  model.ErrorResponse
+// @Router       /profile/me [get]
+func GetMyProfile(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(uuid.UUID)
+
+	var profile model.Profile
+
+	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "profile tidak ditemukan",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"username": profile.Username,
+		"bio":      profile.Bio,
+		"avatar":   profile.Avatar,
+	})
+}
+
+// UpdateMyProfile godoc
+// @Summary      Update My Profile
+// @Description  Update username, bio, atau avatar user yang sedang login
+// @Tags         Profile
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        profile  body      model.UpdateProfileRequest  true  "Update Profile Data"
+// @Success      200      {object}  model.ProfileResponse
+// @Failure      400      {object}  model.ErrorResponse
+// @Failure      401      {object}  model.ErrorResponse
+// @Failure      404      {object}  model.ErrorResponse
+// @Router       /profile/me [patch]
+func UpdateMyProfile(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(uuid.UUID)
+
+	var req model.UpdateProfileRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "invalid request",
+		})
+	}
+
+	var profile model.Profile
+
+	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "profile tidak ditemukan",
+		})
+	}
+
+	// update field jika ada isi
+	if strings.TrimSpace(req.Username) != "" {
+		profile.Username = req.Username
+	}
+
+	if strings.TrimSpace(req.Bio) != "" {
+		profile.Bio = req.Bio
+	}
+
+	if strings.TrimSpace(req.Avatar) != "" {
+		profile.Avatar = req.Avatar
+	}
+
+	if err := config.DB.Save(&profile).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "gagal update profile",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "profile updated",
+		"data":    profile,
 	})
 }

@@ -1,13 +1,24 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Username  string    `gorm:"unique;not null" json:"username"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Email     string    `gorm:"unique;not null" json:"email"`
 	Password  string    `json:"password" example:"rahasia123"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Profile struct {
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey"`
+	UserID   uuid.UUID `gorm:"type:uuid;uniqueIndex"`
+	Username string    `gorm:"unique"; "not null"`
+	Bio      string
+	Avatar   string
 }
 
 type RegisterRequest struct {
@@ -28,4 +39,16 @@ type AuthResponse struct {
 
 type ErrorResponse struct {
 	Message string `json:"message"`
+}
+
+type ProfileResponse struct {
+	Username string `json:"username"`
+	Bio      string `json:"bio"`
+	Avatar   string `json:"avatar"`
+}
+
+type UpdateProfileRequest struct {
+	Username string `json:"username"`
+	Bio      string `json:"bio"`
+	Avatar   string `json:"avatar"`
 }

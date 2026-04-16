@@ -1,4 +1,10 @@
+basePath: /api
 definitions:
+  model.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
   model.LoginRequest:
     properties:
       email:
@@ -8,6 +14,15 @@ definitions:
     required:
     - email
     - password
+    type: object
+  model.ProfileResponse:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      username:
+        type: string
     type: object
   model.RegisterRequest:
     properties:
@@ -23,10 +38,26 @@ definitions:
     - password
     - username
     type: object
+  model.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: arya@example.com
+    name: Arya Prodigy
+  description: API WEBCHAT
+  termsOfService: http://swagger.io/terms/
+  title: Webchat
+  version: "1.0"
 paths:
-  /api/auth/login:
+  /auth/login:
     post:
       consumes:
       - application/json
@@ -50,7 +81,7 @@ paths:
       summary: Login User
       tags:
       - Auth
-  /api/auth/register:
+  /auth/register:
     post:
       consumes:
       - application/json
@@ -74,4 +105,72 @@ paths:
       summary: Daftar User WebSystem
       tags:
       - Auth
+  /profile/me:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil data profile user yang sedang login (berdasarkan JWT)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Profile
+      tags:
+      - Profile
+    patch:
+      consumes:
+      - application/json
+      description: Update username, bio, atau avatar user yang sedang login
+      parameters:
+      - description: Update Profile Data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update My Profile
+      tags:
+      - Profile
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'Masukkan token dengan format: Bearer <token_kamu>'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
