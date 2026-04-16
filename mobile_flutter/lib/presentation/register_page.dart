@@ -33,7 +33,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  // ── REGISTER LOGIC (tidak diubah) ─────────────────────────────────────────
+  // ── REGISTER LOGIC ────────────────────────────────────────────────────────
   Future<void> _register() async {
     if (_usernameCtrl.text.trim().isEmpty) {
       setState(() => _error = 'Username wajib diisi'); return;
@@ -83,216 +83,224 @@ class _RegisterPageState extends State<RegisterPage> {
   // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final isDark = ThemeController.isDark;
-    final bg       = isDark ? const Color(0xFF121212) : Colors.white;
-    final cardBg   = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final text     = isDark ? Colors.white : const Color(0xFF1B1B1B);
-    final hint     = isDark ? Colors.white54 : const Color(0xFF8696A0);
-    final fill     = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF3F6FD);
-    final border   = isDark ? Colors.white12 : const Color(0xFFD1D7DB);
-    final bubbleA  = isDark ? const Color(0xFF1A3A6B) : _kBlue;
-    final bubbleB  = isDark ? const Color(0xFF0D2040) : _kBubbleB;
+    // Menggunakan ValueListenableBuilder agar UI merespon perubahan themeNotifier
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.themeNotifier,
+      builder: (context, mode, child) {
+        final isDark = mode == ThemeMode.dark;
+        
+        // Konstanta warna berdasarkan state isDark
+        final bg       = isDark ? const Color(0xFF121212) : Colors.white;
+        final cardBg   = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+        final text     = isDark ? Colors.white : const Color(0xFF1B1B1B);
+        final hint     = isDark ? Colors.white54 : const Color(0xFF8696A0);
+        final fill     = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF3F6FD);
+        final border   = isDark ? Colors.white12 : const Color(0xFFD1D7DB);
+        final bubbleA  = isDark ? const Color(0xFF1A3A6B) : _kBlue;
+        final bubbleB  = isDark ? const Color(0xFF0D2040) : _kBubbleB;
 
-    return Scaffold(
-      backgroundColor: bg,
-      body: Stack(
-        children: [
-          // Dekorasi atas-kiri
-          Positioned(top: -80, left: -80,
-              child: _bubble(220, bubbleA, opacity: 0.85)),
-          Positioned(top: 30, left: -40,
-              child: _bubble(120, bubbleB, opacity: 0.5)),
-          // Dekorasi bawah-kanan
-          Positioned(bottom: -90, right: -80,
-              child: _bubble(240, bubbleA, opacity: 0.7)),
-          Positioned(bottom: 40, right: -30,
-              child: _bubble(130, bubbleB, opacity: 0.45)),
+        return Scaffold(
+          backgroundColor: bg,
+          body: Stack(
+            children: [
+              // Dekorasi atas-kiri
+              Positioned(top: -80, left: -80,
+                  child: _bubble(220, bubbleA, opacity: 0.85)),
+              Positioned(top: 30, left: -40,
+                  child: _bubble(120, bubbleB, opacity: 0.5)),
+              // Dekorasi bawah-kanan
+              Positioned(bottom: -90, right: -80,
+                  child: _bubble(240, bubbleA, opacity: 0.7)),
+              Positioned(bottom: 40, right: -30,
+                  child: _bubble(130, bubbleB, opacity: 0.45)),
 
-          // Toggle dark/light
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12, right: 12),
-                child: _ThemeToggleBtn(isDark: isDark),
-              ),
-            ),
-          ),
-
-          // Tombol back
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4, left: 4),
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded,
-                      color: isDark ? Colors.white : const Color(0xFF1B1B1B),
-                      size: 20),
-                  onPressed: () => Navigator.pop(context),
+              // Toggle dark/light
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12, right: 12),
+                    child: _ThemeToggleBtn(isDark: isDark),
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // Konten
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 60, 28, 28),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+              // Tombol back
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: text,
+                          size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Logo
-                      Container(
-                        width: 70, height: 70,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [_kBlue, _kBlueDark],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                ),
+              ),
+
+              // Konten
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 60, 28, 28),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
                           ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: _kBlue.withOpacity(0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            )
-                          ],
-                        ),
-                        child: const Icon(Icons.person_add_rounded,
-                            color: Colors.white, size: 34),
+                        ],
                       ),
-                      const SizedBox(height: 18),
-
-                      Text('Buat Akun',
-                          style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: text,
-                              letterSpacing: 0.4)),
-                      const SizedBox(height: 6),
-                      Text('Daftar untuk mulai mengobrol',
-                          style: TextStyle(fontSize: 13, color: hint)),
-                      const SizedBox(height: 28),
-
-                      _field(controller: _usernameCtrl,
-                          hint: 'Username',
-                          icon: Icons.person_outline_rounded,
-                          action: TextInputAction.next,
-                          fill: fill, border: border,
-                          textColor: text, hintColor: hint),
-                      const SizedBox(height: 12),
-
-                      _field(controller: _emailCtrl,
-                          hint: 'Email',
-                          icon: Icons.email_outlined,
-                          keyboard: TextInputType.emailAddress,
-                          action: TextInputAction.next,
-                          fill: fill, border: border,
-                          textColor: text, hintColor: hint),
-                      const SizedBox(height: 12),
-
-                      _field(controller: _passwordCtrl,
-                          hint: 'Password (min. 8 karakter)',
-                          icon: Icons.lock_outline_rounded,
-                          obscure: _hidePwd,
-                          action: TextInputAction.next,
-                          fill: fill, border: border,
-                          textColor: text, hintColor: hint,
-                          suffix: IconButton(
-                            icon: Icon(
-                              _hidePwd
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: hint, size: 20),
-                            onPressed: () =>
-                                setState(() => _hidePwd = !_hidePwd),
-                          )),
-                      const SizedBox(height: 12),
-
-                      _field(controller: _confirmCtrl,
-                          hint: 'Konfirmasi Password',
-                          icon: Icons.lock_outline_rounded,
-                          obscure: _hideConfirm,
-                          fill: fill, border: border,
-                          textColor: text, hintColor: hint,
-                          onSubmit: (_) => _register(),
-                          suffix: IconButton(
-                            icon: Icon(
-                              _hideConfirm
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: hint, size: 20),
-                            onPressed: () =>
-                                setState(() => _hideConfirm = !_hideConfirm),
-                          )),
-
-                      if (_error != null) ...[
-                        const SizedBox(height: 12),
-                        _errorBox(_error!),
-                      ],
-                      const SizedBox(height: 24),
-
-                      SizedBox(
-                        width: double.infinity, height: 52,
-                        child: ElevatedButton(
-                          onPressed: _loading ? null : _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kBlue,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Logo
+                          Container(
+                            width: 70, height: 70,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [_kBlue, _kBlueDark],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _kBlue.withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                )
+                              ],
+                            ),
+                            child: const Icon(Icons.person_add_rounded,
+                                color: Colors.white, size: 34),
                           ),
-                          child: _loading
-                              ? const SizedBox(width: 22, height: 22,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white))
-                              : const Text('Daftar',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
+                          const SizedBox(height: 18),
 
-                      Row(mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                        Text('Sudah punya akun? ',
-                            style: TextStyle(color: hint, fontSize: 14)),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Text('Masuk',
+                          Text('Buat Akun',
                               style: TextStyle(
-                                  color: _kBlue,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14)),
-                        ),
-                      ]),
-                    ],
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: text,
+                                  letterSpacing: 0.4)),
+                          const SizedBox(height: 6),
+                          Text('Daftar untuk mulai mengobrol',
+                              style: TextStyle(fontSize: 13, color: hint)),
+                          const SizedBox(height: 28),
+
+                          _field(controller: _usernameCtrl,
+                              hint: 'Username',
+                              icon: Icons.person_outline_rounded,
+                              action: TextInputAction.next,
+                              fill: fill, border: border,
+                              textColor: text, hintColor: hint),
+                          const SizedBox(height: 12),
+
+                          _field(controller: _emailCtrl,
+                              hint: 'Email',
+                              icon: Icons.email_outlined,
+                              keyboard: TextInputType.emailAddress,
+                              action: TextInputAction.next,
+                              fill: fill, border: border,
+                              textColor: text, hintColor: hint),
+                          const SizedBox(height: 12),
+
+                          _field(controller: _passwordCtrl,
+                              hint: 'Password (min. 8 karakter)',
+                              icon: Icons.lock_outline_rounded,
+                              obscure: _hidePwd,
+                              action: TextInputAction.next,
+                              fill: fill, border: border,
+                              textColor: text, hintColor: hint,
+                              suffix: IconButton(
+                                icon: Icon(
+                                  _hidePwd
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: hint, size: 20),
+                                onPressed: () =>
+                                    setState(() => _hidePwd = !_hidePwd),
+                              )),
+                          const SizedBox(height: 12),
+
+                          _field(controller: _confirmCtrl,
+                              hint: 'Konfirmasi Password',
+                              icon: Icons.lock_outline_rounded,
+                              obscure: _hideConfirm,
+                              fill: fill, border: border,
+                              textColor: text, hintColor: hint,
+                              onSubmit: (_) => _register(),
+                              suffix: IconButton(
+                                icon: Icon(
+                                  _hideConfirm
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: hint, size: 20),
+                                onPressed: () =>
+                                    setState(() => _hideConfirm = !_hideConfirm),
+                              )),
+
+                          if (_error != null) ...[
+                            const SizedBox(height: 12),
+                            _errorBox(_error!),
+                          ],
+                          const SizedBox(height: 24),
+
+                          SizedBox(
+                            width: double.infinity, height: 52,
+                            child: ElevatedButton(
+                              onPressed: _loading ? null : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _kBlue,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: _loading
+                                  ? const SizedBox(width: 22, height: 22,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: Colors.white))
+                                  : const Text('Daftar',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+
+                          Row(mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                            Text('Sudah punya akun? ',
+                                style: TextStyle(color: hint, fontSize: 14)),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Text('Masuk',
+                                  style: TextStyle(
+                                      color: _kBlue,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14)),
+                            ),
+                          ]),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -370,7 +378,10 @@ class _ThemeToggleBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: ThemeController.toggle,
+      onTap: () {
+        // Memanggil fungsi toggle dari ThemeController Anda
+        ThemeController.toggle();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 280),
         width: 64, height: 32,
