@@ -58,7 +58,10 @@ func ConnectDatabase() {
 	fmt.Println("DB_HOST:", host)
 	fmt.Println("DB_PORT:", port)
 
-	database.AutoMigrate(&model.User{})
+	database.AutoMigrate(
+		&model.User{},
+		&model.Profile{},
+	)
 
 	DB = database
 }
