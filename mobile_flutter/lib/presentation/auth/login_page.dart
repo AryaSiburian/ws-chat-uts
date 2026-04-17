@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register_page.dart';
-import 'chat_dashboard_screen.dart';
-import '../theme/theme_controller.dart';
+import '../chat_dashboard_screen.dart';
+import 'package:mobile_flutter/theme/theme_controller.dart';
 
 // ─── API (jangan diubah) ──────────────────────────────────────────────────────
 const kBaseUrl = 'http://localhost:8080';
