@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'presentation/splash_screen.dart';
-import 'theme/theme_controller.dart';
+import 'package:mobile_flutter/theme/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
