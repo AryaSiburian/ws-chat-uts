@@ -10,6 +10,7 @@ type User struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Email     string    `gorm:"unique;not null" json:"email"`
 	Password  string    `json:"password" example:"rahasia123"`
+	Profile   Profile   `gorm:"foreignKey:UserID"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -41,6 +42,7 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+// Endpoint Profile
 type ProfileResponse struct {
 	Username string `json:"username"`
 	Bio      string `json:"bio"`
@@ -51,4 +53,21 @@ type UpdateProfileRequest struct {
 	Username string `json:"username"`
 	Bio      string `json:"bio"`
 	Avatar   string `json:"avatar"`
+}
+
+// Endpoint user
+type UserBaseResponse struct {
+	ID       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
+}
+
+type UserResponse struct {
+	UserBaseResponse
+}
+
+type UserDetailResponse struct {
+	UserBaseResponse
+	Email  string `json:"email"`
+	Bio    string `json:"bio"`
+	Avatar string `json:"avatar"`
 }

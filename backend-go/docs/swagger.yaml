@@ -165,6 +165,56 @@ paths:
       summary: Update My Profile
       tags:
       - Profile
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua user (tanpa detail)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get semua user
+      tags:
+      - Users
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail user berdasarkan ID
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get detail user
+      tags:
+      - Users
 schemes:
 - http
 securityDefinitions:
