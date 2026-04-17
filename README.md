@@ -2,7 +2,7 @@
 
 Aplikasi **real-time chat** berbasis **WebSocket** dengan arsitektur terpisah antara backend dan frontend. Proyek ini saat ini masih dalam tahap **development**, sehingga fitur chat end-to-end dapat terus berkembang seiring iterasi.
 
-## 1) Deskripsi Project
+## 1 Deskripsi Project
 
 `ws-chat-uts` adalah proyek aplikasi chat yang dirancang untuk komunikasi real-time.
 

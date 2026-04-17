@@ -11,12 +11,18 @@ import (
 func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/api")
-	profile := app.Group("/api/profile", middleware.AuthMiddleware)
 
+	profile := api.Group("/profile", middleware.AuthMiddleware)
+	user := api.Group("/users")
 	auth := api.Group("/auth")
+
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
 
 	profile.Get("/me", handlers.GetMyProfile)
 	profile.Patch("/me", handlers.UpdateMyProfile)
+
+	user.Get("/", handlers.GetUsers)
+	user.Get("/:id", handlers.GetUserByID)
+
 }
