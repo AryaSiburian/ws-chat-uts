@@ -22,12 +22,24 @@ func main() {
 		AppName: "E-Library API v1.0",
 	})
 
+	// ── KONFIGURASI CORS FINAL (Sinkron dengan Flutter withCredentials) ──
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000, http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080, http://127.0.0.1:8080, http://localhost, http://127.0.0.1, http://10.0.2.2",
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie",
+		// Wajib mencantumkan http://localhost:3000 tempat Flutter Web berjalan
+		AllowOrigins: "http://localhost:3000, http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080",
+
+		// Wajib ada OPTIONS (untuk preflight Chrome) dan PATCH (untuk update profil)
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+
+		// Wajib izinkan Cookie dan Authorization
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With",
+
+		// Bumbu Rahasia: Beri tahu Chrome bahwa server mengirim Cookie
+		ExposeHeaders: "Set-Cookie",
+
+		// KUNCI UTAMA: Wajib true agar browser mau simpan cookie dari server
 		AllowCredentials: true,
 	}))
+	// ──────────────────────────────────────────────────────────────────────
 
 	app.Use(logger.New())
 
@@ -44,6 +56,6 @@ func main() {
 		port = "8080"
 	}
 
-	log.Println("Server running on http://localhost:" + port)
+	log.Println("🚀 Server running on http://localhost:" + port)
 	log.Fatal(app.Listen(":" + port))
 }

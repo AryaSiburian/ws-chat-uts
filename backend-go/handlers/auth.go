@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"backend-go/config"
 	"backend-go/model"
-	"fmt" // <-- Tambahan untuk nge-print error ke terminal
+	"fmt"
 	"strings"
 	"time"
-
-	"backend-go/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -21,7 +20,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        user  body    model.RegisterRequest  true  "Username & Password"
-// @Success      201   {object}  map[string]string
+// @Success      201   {object}  map[string]interface{}
 // @Router /auth/register [post]
 func Register(c *fiber.Ctx) error {
 	var req model.RegisterRequest
@@ -76,7 +75,6 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		// PRINT ERROR KE TERMINAL BACKEND AGAR KITA TAHU PENYEBABNYA
 		fmt.Println("=== ERROR DB CREATE USER ===", err)
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Gagal membuat user",
@@ -92,8 +90,6 @@ func Register(c *fiber.Ctx) error {
 
 	if err := config.DB.Create(&profile).Error; err != nil {
 		fmt.Println("=== ERROR DB CREATE PROFILE ===", err)
-		// Kita tetap membiarkan response berhasil meski profile gagal, atau bisa juga dikembalikan error.
-		// Sementara kita catat saja errornya di terminal.
 	}
 
 	// 7. response
@@ -110,7 +106,7 @@ func Register(c *fiber.Ctx) error {
 // @Accept       json
 // @Produce      json
 // @Param        login  body      model.LoginRequest  true  "Username & Password"
-// @Success      200    {object}  map[string]string
+// @Success      200    {object}  map[string]interface{}
 // @Router /auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
@@ -142,7 +138,7 @@ func Login(c *fiber.Ctx) error {
 
 	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"message": "Email tidak ditemukan",
+			"message": "Email tidak ditemukan / salah",
 		})
 	}
 
@@ -152,6 +148,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	// Pembuatan JWT Claims
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Hour * 72).Unix(),
@@ -167,9 +164,23 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	// ==============================================================
+	// KUNCI UTAMA: Memasukkan Token ke dalam Cookie yang Aman
+	// ==============================================================
+	cookie := new(fiber.Cookie)
+	cookie.Name = "token"
+	cookie.Value = t
+	cookie.Expires = time.Now().Add(72 * time.Hour)
+	cookie.HTTPOnly = true  // Wajib true agar tidak bisa di-hack via XSS (JavaScript)
+	cookie.SameSite = "Lax" // Mengizinkan pengiriman dari localhost:3000 ke localhost:8080
+	// cookie.Secure = true // Aktifkan ini NANTI kalau aplikasi sudah online pakai HTTPS
+
+	c.Cookie(cookie) // Menempelkan cookie ke header response Chrome
+	// ==============================================================
+
 	return c.JSON(fiber.Map{
 		"message": "Login berhasil",
-		"token":   t,
+		"token":   t, // Kita tetap kirim JSON untuk sekadar info, walau Chrome akan pakai Cookie
 	})
 }
 
@@ -181,17 +192,18 @@ func Login(c *fiber.Ctx) error {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {object}  model.ProfileResponse
-// @Failure      401  {object}  model.ErrorResponse
-// @Failure      404  {object}  model.ErrorResponse
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
 // @Router       /profile/me [get]
 func GetMyProfile(c *fiber.Ctx) error {
+	// Locals "user_id" didapatkan dari Middleware JWT yang berjalan sebelum fungsi ini
 	userID := c.Locals("user_id").(uuid.UUID)
 
 	var profile model.Profile
 
 	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "profile tidak ditemukan",
+			"message": "Profile tidak ditemukan",
 		})
 	}
 
@@ -211,9 +223,9 @@ func GetMyProfile(c *fiber.Ctx) error {
 // @Security     BearerAuth
 // @Param        profile  body      model.UpdateProfileRequest  true  "Update Profile Data"
 // @Success      200      {object}  model.ProfileResponse
-// @Failure      400      {object}  model.ErrorResponse
-// @Failure      401      {object}  model.ErrorResponse
-// @Failure      404      {object}  model.ErrorResponse
+// @Failure      400      {object}  map[string]interface{}
+// @Failure      401      {object}  map[string]interface{}
+// @Failure      404      {object}  map[string]interface{}
 // @Router       /profile/me [patch]
 func UpdateMyProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
@@ -222,7 +234,7 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"message": "invalid request",
+			"message": "Format request tidak valid",
 		})
 	}
 
@@ -230,11 +242,11 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 
 	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "profile tidak ditemukan",
+			"message": "Profile tidak ditemukan",
 		})
 	}
 
-	// update field jika ada isi
+	// Update field hanya jika data yang dikirim tidak kosong
 	if strings.TrimSpace(req.Username) != "" {
 		profile.Username = req.Username
 	}
@@ -249,12 +261,12 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 
 	if err := config.DB.Save(&profile).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
-			"message": "gagal update profile",
+			"message": "Gagal menyimpan update profile",
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "profile updated",
+		"message": "Profile berhasil diupdate",
 		"data":    profile,
 	})
 }
