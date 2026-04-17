@@ -1,11 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Untuk kIsWeb
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart'; // Untuk Native
+import 'dart:io' show Platform; // Untuk cek OS
+
 import 'package:mobile_flutter/model/chat_user.dart';
 import 'package:mobile_flutter/presentation/setting_page.dart';
 import 'package:mobile_flutter/presentation/widgets/chat_detail.dart';
 import 'package:mobile_flutter/presentation/widgets/chat_list.dart';
 import 'package:mobile_flutter/presentation/widgets/navbar.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
+import 'package:mobile_flutter/services/api_client.dart'; // Ambil cookie
 
 const _kBlue = Color(0xFF2C6BED);
 const _kDarkBg = Color(0xFF121212);
@@ -22,6 +28,7 @@ class ChatDashboardScreen extends StatefulWidget {
 class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   int _selectedIndex = 0;
   ChatModel? selectedChat;
+  WebSocketChannel? _channel;
 
   final List<ChatModel> _chats = [
     ChatModel(id: '1', name: 'Eza Kadek', lastMessage: 'Golang: Bingung aku cuk', time: 'Sat'),
@@ -30,12 +37,57 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
     ChatModel(id: '4', name: 'Flutter Dev', lastMessage: 'setState vs Provider', time: 'Mon'),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _initWS(); // <-- PANGGIL WEBSOCKET SAAT HALAMAN DIBUKA
+  }
+
+  void _initWS() async {
+    try {
+      final cookieString = await ApiClient().getCookieHeader();
+      
+      String ipAddress = "127.0.0.1";
+      if (kIsWeb) {
+        ipAddress = "localhost";
+      } else if (Platform.isAndroid) {
+        ipAddress = "10.0.2.2";
+      }
+      
+      final wsUrl = Uri.parse("ws://$ipAddress:8080/ws");
+      debugPrint("🕵️ WS Connect: $cookieString");
+
+      if (kIsWeb) {
+        _channel = WebSocketChannel.connect(wsUrl);
+      } else {
+        _channel = IOWebSocketChannel.connect(
+          wsUrl,
+          headers: {
+            if (cookieString != null && cookieString.isNotEmpty) 'Cookie': cookieString,
+          },
+        );
+      }
+
+      _channel?.stream.listen(
+        (message) => debugPrint("Pesan masuk WS: $message"),
+        onError: (error) => debugPrint("Error WS: $error"),
+        onDone: () => debugPrint("Koneksi WS putus."),
+      );
+    } catch (e) {
+      debugPrint("Gagal WS: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
   void _onNavTap(int index) {
     setState(() {
       _selectedIndex = index;
-      if (index != 0) {
-        selectedChat = null;
-      }
+      if (index != 0) selectedChat = null;
     });
   }
 
@@ -44,23 +96,19 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
     setState(() {});
   }
 
- void _onChatSelected(ChatModel chat) {
-  final isMobile = MediaQuery.of(context).size.width < 600;
-
-  if (isMobile) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChatDetailView(
-          isDark: ThemeController.isDark,
-          selectedChat: chat,
+  void _onChatSelected(ChatModel chat) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    if (isMobile) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatDetailView(isDark: ThemeController.isDark, selectedChat: chat),
         ),
-      ),
-    );
-  } else {
-    setState(() => selectedChat = chat);
+      );
+    } else {
+      setState(() => selectedChat = chat);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -86,49 +134,44 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   }
 
   Widget _buildDesktopLayout(bool isDark) {
-    
     return Row(
-    children: [
-    ChatNavigationRail(
-      isDark: isDark,
-      selectedIndex: _selectedIndex,
-      onDestinationSelected: _onNavTap,
-      onSettingsTap: _openSettings,
-    ),
-
-    Expanded(
-      child: _selectedIndex == 0
-          ? Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: ChatListView(
-                    isDark: isDark,
-                    chats: _chats,
-                    selectedChat: selectedChat,
-                    onChatSelected: _onChatSelected,
-                  ),
-                ),
-                Expanded(
-                  flex: 5,
-                  child: ChatDetailView(
-                    isDark: isDark,
-                    selectedChat: selectedChat,
-                  ),
-                ),
-              ],
-            )
-          : _CallsView(isDark: isDark), 
-    ),
-  ],
-);
+      children: [
+        ChatNavigationRail(
+          isDark: isDark,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onNavTap,
+          onSettingsTap: _openSettings,
+        ),
+        Expanded(
+          child: _selectedIndex == 0
+              ? Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: ChatListView(
+                        isDark: isDark,
+                        chats: _chats,
+                        selectedChat: selectedChat,
+                        onChatSelected: _onChatSelected,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: ChatDetailView(
+                        isDark: isDark,
+                        selectedChat: selectedChat,
+                      ),
+                    ),
+                  ],
+                )
+              : _CallsView(isDark: isDark), 
+        ),
+      ],
+    );
   }
 
   Widget _buildMobileBody(bool isDark) {
-    if (_selectedIndex == 1) {
-      return _CallsView(isDark: isDark);
-    }
-
+    if (_selectedIndex == 1) return _CallsView(isDark: isDark);
     return ChatListView(
       isDark: isDark,
       chats: _chats,
@@ -151,27 +194,14 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
           onTap: _openSettings,
           child: CircleAvatar(
             backgroundColor: isDark ? _kDarkCard : const Color(0xFFE8EDF5),
-            child: Icon(
-              CupertinoIcons.person_fill,
-              color: isDark ? Colors.white54 : _kBlue,
-              size: 18,
-            ),
+            child: Icon(CupertinoIcons.person_fill, color: isDark ? Colors.white54 : _kBlue, size: 18),
           ),
         ),
       ),
-      title: Text(
-        'Signal',
-        style: TextStyle(fontWeight: FontWeight.w800, color: titleColor, fontSize: 20),
-      ),
+      title: Text('Signal', style: TextStyle(fontWeight: FontWeight.w800, color: titleColor, fontSize: 20)),
       actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(CupertinoIcons.camera, color: _kBlue, size: 22),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(CupertinoIcons.pencil_circle_fill, color: _kBlue, size: 24),
-        ),
+        IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.camera, color: _kBlue, size: 22)),
+        IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.pencil_circle_fill, color: _kBlue, size: 24)),
         const SizedBox(width: 4),
       ],
     );
@@ -198,21 +228,9 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
       elevation: 0,
       type: BottomNavigationBarType.fixed,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.chat_bubble),
-          activeIcon: Icon(CupertinoIcons.chat_bubble_fill),
-          label: 'Chats',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.phone),
-          activeIcon: Icon(CupertinoIcons.phone_fill),
-          label: 'Calls',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(CupertinoIcons.settings),
-          activeIcon: Icon(CupertinoIcons.settings_solid),
-          label: 'Settings',
-        ),
+        BottomNavigationBarItem(icon: Icon(CupertinoIcons.chat_bubble), activeIcon: Icon(CupertinoIcons.chat_bubble_fill), label: 'Chats'),
+        BottomNavigationBarItem(icon: Icon(CupertinoIcons.phone), activeIcon: Icon(CupertinoIcons.phone_fill), label: 'Calls'),
+        BottomNavigationBarItem(icon: Icon(CupertinoIcons.settings), activeIcon: Icon(CupertinoIcons.settings_solid), label: 'Settings'),
       ],
     );
   }
@@ -220,7 +238,6 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
 
 class _CallsView extends StatelessWidget {
   const _CallsView({required this.isDark});
-
   final bool isDark;
 
   @override
@@ -234,21 +251,11 @@ class _CallsView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              CupertinoIcons.phone_fill,
-              size: 64,
-              color: isDark ? Colors.white12 : Colors.grey.shade300,
-            ),
+            Icon(CupertinoIcons.phone_fill, size: 64, color: isDark ? Colors.white12 : Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text(
-              'Belum ada panggilan',
-              style: TextStyle(color: textColor, fontSize: 17, fontWeight: FontWeight.w600),
-            ),
+            Text('Belum ada panggilan', style: TextStyle(color: textColor, fontSize: 17, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(
-              'Riwayat panggilan akan muncul di sini',
-              style: TextStyle(color: subColor, fontSize: 13),
-            ),
+            Text('Riwayat panggilan akan muncul di sini', style: TextStyle(color: subColor, fontSize: 13)),
           ],
         ),
       ),

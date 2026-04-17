@@ -3,8 +3,6 @@ package main
 import (
 	"backend-go/config"
 	"backend-go/routers"
-
-	// "context"
 	"log"
 	"os"
 
@@ -16,45 +14,39 @@ import (
 	swagger "github.com/swaggo/fiber-swagger"
 )
 
-// @title           Webchat
-// @version         1.0
-// @description     API WEBCHAT
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name    Arya Prodigy
-// @contact.email   arya@example.com
-
-// @securityDefinitions.apikey  BearerAuth
-// @in                          header
-// @name                        Authorization
-// @description                 Masukkan token dengan format: Bearer <token_kamu>
-
-// @host            localhost:8080
-// @BasePath        /api
-// @schemes         http
 func main() {
 	config.LoadEnv()
 	config.ConnectDatabase()
-	// 2. Inisialisasi Fiber App
+
 	app := fiber.New(fiber.Config{
 		AppName: "E-Library API v1.0",
 	})
 
+	// ── KONFIGURASI CORS FINAL (Sinkron dengan Flutter withCredentials) ──
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		// Wajib mencantumkan http://localhost:3000 tempat Flutter Web berjalan
+		AllowOrigins: "http://localhost:3000, http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080",
+
+		// Wajib ada OPTIONS (untuk preflight Chrome) dan PATCH (untuk update profil)
+		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+
+		// Wajib izinkan Cookie dan Authorization
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With",
+
+		// Bumbu Rahasia: Beri tahu Chrome bahwa server mengirim Cookie
+		ExposeHeaders: "Set-Cookie",
+
+		// KUNCI UTAMA: Wajib true agar browser mau simpan cookie dari server
+		AllowCredentials: true,
 	}))
+	// ──────────────────────────────────────────────────────────────────────
 
 	app.Use(logger.New())
 
 	routers.SetupRoutes(app)
 
-	// 5. Route Khusus untuk Swagger UI
-	// Akses di: http://localhost:3001/swagger/index.html
 	app.Get("/swagger/*", swagger.WrapHandler)
 
-	// 6. Redirect halaman utama ke Swagger (Opsional tapi membantu)
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/swagger/index.html")
 	})
@@ -63,31 +55,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	// 7. Jalankan Server
+
 	log.Println("🚀 Server running on http://localhost:" + port)
 	log.Fatal(app.Listen(":" + port))
-
-	// // 2. Test Koneksi Redis
-	// redisHost := os.Getenv("REDIS_HOST")
-	// if redisHost == "" {
-	// 	redisHost = "localhost"
-	// }
-
-	// rdb := redis.NewClient(&redis.Options{
-	// 	Addr: fmt.Sprintf("%s:6379", redisHost),
-	// })
-
-	// if err := rdb.Ping(ctx).Err(); err != nil {
-	// 	log.Printf("⚠️ Redis belum aktif: %v", err)
-	// } else {
-	// 	fmt.Println("✅ Terhubung ke Redis!")
-	// }
-
-	// // 3. Server Sederhana
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Fprintf(w, "Backend Chat System Is Running!")
-	// })
-
-	// fmt.Println("🚀 Server jalan di port 8080")
-	// log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -6,13 +6,11 @@ import 'register_page.dart';
 import '../chat_dashboard_screen.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
 
-// ─── API (jangan diubah) ──────────────────────────────────────────────────────
 const kBaseUrl = 'http://localhost:8080';
 
-// ─── WARNA ────────────────────────────────────────────────────────────────────
 const kSignalBlue       = Color(0xFF2C6BED);
 const kSignalBlueDark   = Color(0xFF1A56D6);
-const kBlueBubble       = Color(0xFFAEC6F6); // gelembung dekorasi terang
+const kBlueBubble       = Color(0xFFAEC6F6);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,7 +32,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // ── LOGIN LOGIC (tidak diubah, hanya ditambah simpan email) ──────────────
   Future<void> _login() async {
     if (_emailCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
       setState(() => _error = 'Email dan password wajib diisi');
@@ -50,12 +47,17 @@ class _LoginPageState extends State<LoginPage> {
           'password': _passwordCtrl.text,
         }),
       );
+      
       final data = jsonDecode(res.body) as Map<String, dynamic>;
+      
       if (res.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', data['token'] ?? '');
-        // Simpan email untuk ditampilkan di halaman profil
+        
+        // Menggunakan .toString() untuk menghindari error tipe data dynamic
+        await prefs.setString('token', data['token']?.toString() ?? '');
+        await prefs.setString('user_id', data['user_id']?.toString() ?? '');
         await prefs.setString('email', _emailCtrl.text.trim());
+        
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
@@ -73,7 +75,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // ── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isDark = ThemeController.isDark;
@@ -90,7 +91,6 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: bg,
       body: Stack(
         children: [
-          // ── Dekorasi lingkaran atas-kiri ──────────────────────────────
           Positioned(
             top: -80, left: -80,
             child: _bubble(220, bubbleA, opacity: 0.85),
@@ -99,7 +99,6 @@ class _LoginPageState extends State<LoginPage> {
             top: 30, left: -40,
             child: _bubble(120, bubbleB, opacity: 0.5),
           ),
-          // ── Dekorasi lingkaran bawah-kanan ────────────────────────────
           Positioned(
             bottom: -90, right: -80,
             child: _bubble(240, bubbleA, opacity: 0.7),
@@ -109,7 +108,6 @@ class _LoginPageState extends State<LoginPage> {
             child: _bubble(130, bubbleB, opacity: 0.45),
           ),
 
-          // ── Toggle dark/light (pojok kanan atas) ─────────────────────
           SafeArea(
             child: Align(
               alignment: Alignment.topRight,
@@ -120,7 +118,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // ── Konten utama ──────────────────────────────────────────────
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -141,7 +138,6 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo
                       Container(
                         width: 70, height: 70,
                         decoration: BoxDecoration(
@@ -175,7 +171,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(fontSize: 14, color: hintColor)),
                       const SizedBox(height: 32),
 
-                      // Input email
                       _inputField(
                         controller: _emailCtrl,
                         hint: 'Email',
@@ -189,7 +184,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Input password
                       _inputField(
                         controller: _passwordCtrl,
                         hint: 'Password',
@@ -211,14 +205,12 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      // Error
                       if (_error != null) ...[
                         const SizedBox(height: 12),
                         _errorBox(_error!),
                       ],
                       const SizedBox(height: 24),
 
-                      // Tombol masuk
                       SizedBox(
                         width: double.infinity, height: 52,
                         child: ElevatedButton(
@@ -270,7 +262,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ── HELPERS ───────────────────────────────────────────────────────────────
   Widget _bubble(double size, Color color, {double opacity = 1}) => Container(
         width: size,
         height: size,
@@ -340,7 +331,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// ─── WIDGET TOGGLE TEMA ───────────────────────────────────────────────────────
 class _ThemeToggle extends StatelessWidget {
   final bool isDark;
   const _ThemeToggle({required this.isDark});
