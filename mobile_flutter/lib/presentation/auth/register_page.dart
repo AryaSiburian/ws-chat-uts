@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../theme/theme_controller.dart';
+import 'package:mobile_flutter/theme/theme_controller.dart';
 
 const _kBaseUrl   = 'http://localhost:8080';
 const _kBlue      = Color(0xFF2C6BED);

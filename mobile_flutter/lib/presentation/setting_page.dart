@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme/theme_controller.dart';
-import 'login_page.dart';
+import 'package:mobile_flutter/theme/theme_controller.dart';
+import 'auth/login_page.dart';
 
 const _kBlue = Color(0xFF2C6BED);
 

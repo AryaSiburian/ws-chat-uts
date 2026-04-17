@@ -1,54 +1,198 @@
-# WebSocket Chat System - UTS Metodologi Penelitian II
+# ws-chat-uts
 
-Project ini adalah sistem backend chat real-time yang dibangun menggunakan **Golang**, **PostgreSQL**, dan **Redis**. Selain sebagai aplikasi chat, project ini berfungsi sebagai lingkungan pengujian untuk riset perbandingan performa indexing pada database.
+Aplikasi **real-time chat** berbasis **WebSocket** dengan arsitektur terpisah antara backend dan frontend. Proyek ini saat ini masih dalam tahap **development**, sehingga fitur chat end-to-end dapat terus berkembang seiring iterasi.
 
-## 📂 Struktur Folder & Arsitektur
+## 1 Deskripsi Project
 
-Project ini mengikuti pola modular untuk memastikan kode mudah dikelola dan dikembangkan:
+`ws-chat-uts` adalah proyek aplikasi chat yang dirancang untuk komunikasi real-time.
 
-* **`config/`**: Mengelola konfigurasi global, termasuk pemuatan variabel lingkungan (ENV) dari Docker dan inisialisasi koneksi database (GORM & Redis).
-* **`handlers/`**: Lapisan logika aplikasi. Menangani request masuk, proses *upgrade* koneksi ke WebSocket, dan validasi input pengguna.
-* **`middleware/`**: Penengah request untuk menangani fungsi seperti Logging, CORS, dan Autentikasi keamanan.
-* **`model/`**: Definisi struktur data tunggal. Berisi **Entities** untuk skema tabel PostgreSQL dan **DTO** (Data Transfer Object) untuk pertukaran data JSON dengan Flutter.
-* **`repository/`**: Lapisan akses data (Data Access Layer). Fokus pada manipulasi database seperti menyimpan pesan atau mengambil riwayat chat menggunakan GORM.
-* **`routers/`**: Definisi jalur API (Endpoint). Mengatur pemetaan URL ke fungsi handler yang sesuai (misal: `/ws` untuk chat).
-* **`main.go`**: Titik masuk utama aplikasi yang menginisialisasi server dan menghubungkan semua modul saat dijalankan.
+- **Backend (Golang)** menangani API, autentikasi, dan orkestrasi layanan.
+- **Frontend (Flutter)** menjadi client mobile untuk interaksi pengguna.
+- **PostgreSQL** digunakan sebagai penyimpanan data utama.
+- **Redis** disiapkan untuk kebutuhan caching/pub-sub realtime.
+- Seluruh service backend dijalankan melalui **Docker Compose**.
 
-## 🔬 Fokus Riset: Optimasi Database
-Project ini mengimplementasikan dua jenis index pada PostgreSQL untuk dibandingkan efisiensinya:
-1.  **B-Tree Index**: Digunakan pada kolom `created_at` dan `sender_id` untuk mempercepat pencarian pesan berdasarkan waktu dan pengirim.
-2.  **GIN (Generalized Inverted Index)**: Digunakan pada kolom `content` untuk mendukung fitur *Full-Text Search* yang efisien saat mencari kata kunci di dalam ribuan pesan.
+> Status saat ini: development (pengembangan aktif).
 
-## 🚀 Teknologi yang Digunakan
-- **Language**: Go (Golang) 1.24+
-- **Database**: PostgreSQL 16 (Primary Storage)
-- **Cache**: Redis 7 (Real-time Status & Pub/Sub)
-- **ORM**: GORM
-- **DevOps**: Docker & Docker Compose
-- **Environment**: Ubuntu WSL2
+---
 
-## 🛠️ Cara Menjalankan
-1. Pastikan Docker Desktop sudah aktif.
-2. Jalankan perintah berikut di terminal:
-   ```bash
-   docker compose up --build
+## 2) Tech Stack
 
+- **Golang** (backend API/service)
+- **Flutter** (aplikasi mobile)
+- **PostgreSQL** (database utama)
+- **Redis** (cache & messaging pendukung realtime)
+- **Docker & Docker Compose** (container orchestration lokal)
 
-📱 Frontend (Flutter)
-Folder lib/ disusun berdasarkan tanggung jawab masing-masing komponen:
+---
 
-core/: Jantung aplikasi yang berisi helper, konstanta, konfigurasi theme, dan setup dasar WebSocket.
+## 3) Struktur Folder
 
-data/: Mengelola sumber data. Terdiri dari models (untuk JSON parsing) dan services (logika koneksi WebSocket).
+Berikut struktur utama project:
 
-logic/: Lapisan state management. Berisi file BLoC (Business Logic Component) untuk mengatur aliran data aplikasi.
+```text
+ws-chat-uts/
+├── backend-go/
+├── mobile_flutter/
+├── database/
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
 
-presentation/: Lapisan UI. Berisi screens (halaman utama) dan widgets (komponen UI kecil yang bisa digunakan ulang).
+### Penjelasan singkat tiap folder
 
-Selain folder lib/, terdapat folder pendukung aset:
+- **`backend-go/`**  
+  Berisi source code backend Golang (konfigurasi, handler, middleware, model, routing, dokumentasi Swagger, dan entry point aplikasi).
 
-assets/: Penyimpanan file statis aplikasi.
+- **`mobile_flutter/`** *(catatan: ini folder frontend yang ada di repository saat ini)*  
+  Berisi source code aplikasi Flutter (UI, state, model, dan konfigurasi multiplatform Android/iOS/Web/Desktop).
 
-animations/: Tempat menyimpan file JSON animasi (Lottie).
+- **`database/`**  
+  Berisi kebutuhan inisialisasi database (contoh: skrip SQL awal).
 
-images/: Tempat menyimpan aset gambar, logo, atau ikon.
+- **`docker-compose.yml`**  
+  Definisi service container (backend, PostgreSQL, Redis) dan networking antar-service.
+
+- **`.env.example`**  
+  Contoh variabel environment minimum untuk koneksi database.
+
+> Jika Anda menggunakan istilah `flutter_mobile`, pada repository ini padanannya adalah folder **`mobile_flutter/`**.
+
+---
+
+## 4) Cara Menjalankan Project
+
+### Prasyarat
+
+Pastikan sudah terpasang:
+
+- Docker + Docker Compose
+- Flutter SDK
+- Git
+
+### Langkah-langkah
+
+1. **Clone repository**
+
+```bash
+git clone <url-repository-anda>
+cd ws-chat-uts
+```
+
+2. **Siapkan environment file**
+
+```bash
+cp .env.example .env
+```
+
+Lalu isi nilai variabel pada `.env` sesuai kebutuhan.
+
+3. **Jalankan service backend + database + redis**
+
+```bash
+docker compose up --build
+```
+
+4. **Pastikan semua service berjalan**
+
+- `chat-backend` (backend)
+- `chat-db` (PostgreSQL)
+- `chat-redis` (Redis)
+
+Cek status service:
+
+```bash
+docker compose ps
+```
+
+5. **Jalankan frontend Flutter (terpisah dari Docker Compose)**
+
+Buka terminal baru, lalu:
+
+```bash
+cd mobile_flutter
+flutter pub get
+flutter run
+```
+
+---
+
+## 5) Environment
+
+Project menggunakan environment variables untuk konfigurasi koneksi.
+
+### Minimal variabel (berdasarkan `.env.example`)
+
+```env
+DB_USER=<username_db>
+DB_PASSWORD=<password_db>
+DB_NAME=<nama_db>
+```
+
+### Variabel yang juga digunakan service backend
+
+```env
+DB_HOST=db
+DB_PORT=5432
+APP_PORT=8080
+REDIS_HOST=redis
+REDIS_PORT=6379
+JWT_SECRET=<secret_token>
+```
+
+> `DB_HOST=db` dan `REDIS_HOST=redis` mengikuti nama service pada Docker Compose internal network.
+
+---
+
+## 6) API / WebSocket Info
+
+### API utama (saat ini)
+
+Base path backend:
+
+```text
+/api
+```
+
+Endpoint yang sudah tersedia antara lain:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/profile/me` (memerlukan JWT)
+- `PATCH /api/profile/me` (memerlukan JWT)
+
+Dokumentasi Swagger:
+
+- `GET /swagger/index.html`
+
+### WebSocket
+
+- Endpoint WebSocket umum untuk chat biasanya berada pada path seperti:
+
+```text
+/ws
+```
+
+- Pada versi saat ini, route WebSocket chat belum diekspos di routing utama backend (masih tahap pengembangan).
+
+Contoh koneksi WebSocket (saat endpoint tersedia):
+
+```text
+ws://localhost:8080/ws
+```
+
+---
+
+## 7) Catatan Tambahan
+
+- Pastikan Docker daemon aktif sebelum menjalankan `docker compose up --build`.
+- Pastikan Flutter SDK siap (`flutter doctor` tidak ada error kritis).
+- Jika port bentrok, sesuaikan mapping port pada `docker-compose.yml`.
+- Untuk development, jalankan backend via Docker Compose dan frontend secara lokal agar iterasi UI lebih cepat.
+
+---
+
+## Lisensi
+
+Tambahkan informasi lisensi sesuai kebijakan project (mis. MIT, Apache-2.0, atau private internal).
