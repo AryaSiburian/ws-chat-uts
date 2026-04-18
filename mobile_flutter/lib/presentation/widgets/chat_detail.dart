@@ -16,6 +16,51 @@ class ChatDetailView extends StatelessWidget {
   static const _kDarkBg = Color(0xFF121212);
   static const _kDarkSurface = Color(0xFF1E1E1E);
 
+  Widget _buildInputBar() {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? _kDarkSurface : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? Colors.white12 : const Color(0xFFEFEFEF),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(CupertinoIcons.smiley),
+            ),
+           
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : const Color(0xFFF4F4F4),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const TextField(
+                  decoration: InputDecoration(
+                    hintText: "Message",
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+            ),
+            
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(CupertinoIcons.add),
+            ),
+          ],
+        ),
+      );
+    }
+
   @override
   Widget build(BuildContext context) {
     final bg = isDark ? _kDarkBg : const Color(0xFFF2F2F7);
@@ -25,9 +70,9 @@ class ChatDetailView extends StatelessWidget {
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return Container(
-      color: bg,
-      child: Container(
+    return Scaffold(
+      backgroundColor: bg,
+      body: Container(
         color: surfaceBg,
         child: selectedChat == null
             ? EmptyChatView(isDark: isDark)
@@ -69,10 +114,6 @@ class ChatDetailView extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                'Last message at ${selectedChat!.time}',
-                                style: TextStyle(color: subColor, fontSize: 12),
-                              ),
                             ],
                           ),
                         ),
@@ -80,18 +121,56 @@ class ChatDetailView extends StatelessWidget {
                       ],
                     ),
                   ),
+
                   Expanded(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          selectedChat!.lastMessage,
-                          style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.w500),
-                          textAlign: TextAlign.center,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 40),
+                            CircleAvatar(
+                              radius: 50,
+                              child: Text(
+                                selectedChat!.name[0].toUpperCase(),
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            Text(
+                              selectedChat!.name,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF2A2A2A)
+                                    : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Text("Lorem Ipsum"),
+                                  SizedBox(height: 6),
+                                  Text("Lorem Ipsum"),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
+                  _buildInputBar(),
                 ],
               ),
       ),
