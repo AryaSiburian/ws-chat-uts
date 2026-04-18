@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'presentation/splash_screen.dart';
-import 'package:mobile_flutter/theme/theme_controller.dart';
+import 'theme/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeController.init(); // baca tema tersimpan dari SharedPreferences
+  await ApiClient().init(); // Inisialisasi Cookie Manager
   runApp(const MyApp());
 }
 

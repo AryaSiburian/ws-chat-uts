@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"backend-go/model"
-	// "net/http"
+	"fmt" // <-- Tambahan untuk nge-print error ke terminal
 	"strings"
 	"time"
 
@@ -70,12 +70,14 @@ func Register(c *fiber.Ctx) error {
 
 	// 5. CREATE USER + UUID
 	user := model.User{
-		ID:       uuid.New(), // 👈 INI UUID NYA
+		ID:       uuid.New(),
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
+		// PRINT ERROR KE TERMINAL BACKEND AGAR KITA TAHU PENYEBABNYA
+		fmt.Println("=== ERROR DB CREATE USER ===", err)
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Gagal membuat user",
 		})
@@ -83,12 +85,16 @@ func Register(c *fiber.Ctx) error {
 
 	// 6. CREATE PROFILE
 	profile := model.Profile{
-		ID:       uuid.New(), // optional tapi bagus
+		ID:       uuid.New(),
 		UserID:   user.ID,
 		Username: req.Username,
 	}
 
-	config.DB.Create(&profile)
+	if err := config.DB.Create(&profile).Error; err != nil {
+		fmt.Println("=== ERROR DB CREATE PROFILE ===", err)
+		// Kita tetap membiarkan response berhasil meski profile gagal, atau bisa juga dikembalikan error.
+		// Sementara kita catat saja errornya di terminal.
+	}
 
 	// 7. response
 	return c.Status(201).JSON(fiber.Map{

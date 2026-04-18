@@ -1,10 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register_page.dart';
+<<<<<<< HEAD:mobile_flutter/lib/presentation/auth/login_page.dart
 import '../chat_dashboard_screen.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
+=======
+import 'chat_dashboard_screen.dart';
+import '../theme/theme_controller.dart';
+import '../services/api_client.dart';
+>>>>>>> b7253ac (testing http cookie implement):mobile_flutter/lib/presentation/login_page.dart
 
 // ─── API (jangan diubah) ──────────────────────────────────────────────────────
 const kBaseUrl = 'http://localhost:8080';
@@ -34,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // ── LOGIN LOGIC (tidak diubah, hanya ditambah simpan email) ──────────────
+  // ── LOGIN LOGIC (Menggunakan Dio untuk otomatis simpan HttpOnly Cookie) ──
   Future<void> _login() async {
     if (_emailCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
       setState(() => _error = 'Email dan password wajib diisi');
@@ -42,17 +48,19 @@ class _LoginPageState extends State<LoginPage> {
     }
     setState(() { _loading = true; _error = null; });
     try {
-      final res = await http.post(
-        Uri.parse('$kBaseUrl/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final api = ApiClient();
+        final res = await api.dio.post(
+        '/api/auth/login', 
+        data: {
           'email':    _emailCtrl.text.trim(),
           'password': _passwordCtrl.text,
-        }),
+        },
       );
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      
       if (res.statusCode == 200) {
+        final data = res.data is String ? jsonDecode(res.data) : res.data;
         final prefs = await SharedPreferences.getInstance();
+        
         await prefs.setString('token', data['token'] ?? '');
         // Simpan email untuk ditampilkan di halaman profil
         await prefs.setString('email', _emailCtrl.text.trim());
@@ -63,8 +71,15 @@ class _LoginPageState extends State<LoginPage> {
           (route) => false,
         );
       } else {
-        setState(() => _error =
-            data['Message'] ?? data['message'] ?? 'Login gagal');
+        final data = res.data is String ? jsonDecode(res.data) : res.data;
+        setState(() => _error = data['Message'] ?? data['message'] ?? 'Login gagal');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response!.data is String ? jsonDecode(e.response!.data) : e.response!.data;
+        setState(() => _error = data?['Message'] ?? data?['message'] ?? 'Login gagal');
+      } else {
+        setState(() => _error = 'Terjadi Kesalahan Koneksi.');
       }
     } catch (e) {
       setState(() => _error = 'Terjadi Kesalahan Koneksi.');

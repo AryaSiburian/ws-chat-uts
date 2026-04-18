@@ -1,93 +1,98 @@
 package main
 
 import (
-	"backend-go/config"
-	"backend-go/routers"
-
-	// "context"
-	"log"
-	"os"
-
-	_ "backend-go/docs"
+	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	swagger "github.com/swaggo/fiber-swagger"
+	"github.com/gofiber/websocket/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-// @title           Webchat
-// @version         1.0
-// @description     API WEBCHAT
-// @termsOfService  http://swagger.io/terms/
+// Secret Key sesuai request
+const jwtSecret = "rahasia123"
 
-// @contact.name    Arya Prodigy
-// @contact.email   arya@example.com
-
-// @securityDefinitions.apikey  BearerAuth
-// @in                          header
-// @name                        Authorization
-// @description                 Masukkan token dengan format: Bearer <token_kamu>
-
-// @host            localhost:8080
-// @BasePath        /api
-// @schemes         http
 func main() {
-	config.LoadEnv()
-	config.ConnectDatabase()
-	// 2. Inisialisasi Fiber App
-	app := fiber.New(fiber.Config{
-		AppName: "E-Library API v1.0",
-	})
+	app := fiber.New()
 
+	// CORS Setup: SANGAT PENTING untuk HttpOnly Cookie
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowOrigins:     "http://localhost:3000, http://127.0.0.1:3000", // Sesuaikan jika dites di Web
+		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowCredentials: true, // Wajib true agar cookie bisa lewat
 	}))
 
-	app.Use(logger.New())
+	// API Login
+	app.Post("/api/auth/login", func(c *fiber.Ctx) error {
+		// Asumsi validasi email & password sukses...
 
-	routers.SetupRoutes(app)
+		// Buat JWT Token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"user_id": "123",
+			"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		})
+		tokenString, _ := token.SignedString([]byte(jwtSecret))
 
-	// 5. Route Khusus untuk Swagger UI
-	// Akses di: http://localhost:3001/swagger/index.html
-	app.Get("/swagger/*", swagger.WrapHandler)
+		// Set HttpOnly Cookie
+		c.Cookie(&fiber.Cookie{
+			Name:     "jwt_token",
+			Value:    tokenString,
+			Expires:  time.Now().Add(24 * time.Hour),
+			HTTPOnly: true,  // Amankan dari XSS
+			Secure:   false, // Set true jika nanti pakai HTTPS
+			SameSite: "Lax",
+			Path:     "/",
+		})
 
-	// 6. Redirect halaman utama ke Swagger (Opsional tapi membantu)
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Redirect("/swagger/index.html")
+		// Kirim response sukses sesuai format yang diharapkan Frontend
+		return c.JSON(fiber.Map{
+			"message": "Login berhasil",
+			"token":   tokenString, // Opsional: Boleh dikirim jika masih butuh di SharedPreferences untuk hal lain, tapi WS akan pakai Cookie
+		})
 	})
 
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "8080"
+	// Middleware untuk membaca HttpOnly Cookie
+	authMiddleware := func(c *fiber.Ctx) error {
+		tokenStr := c.Cookies("jwt_token")
+		if tokenStr == "" {
+			return c.Status(401).JSON(fiber.Map{"error": "Unauthorized: Cookie tidak ada"})
+		}
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method")
+			}
+			return []byte(jwtSecret), nil
+		})
+
+		if err != nil || !token.Valid {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized: Token tidak valid"})
+		}
+
+		return c.Next()
 	}
-	// 7. Jalankan Server
-	log.Println("🚀 Server running on http://localhost:" + port)
-	log.Fatal(app.Listen(":" + port))
 
-	// // 2. Test Koneksi Redis
-	// redisHost := os.Getenv("REDIS_HOST")
-	// if redisHost == "" {
-	// 	redisHost = "localhost"
-	// }
+	// Endpoint WebSocket
+	app.Get("/ws", authMiddleware, websocket.New(func(c *websocket.Conn) {
+		fmt.Println("Client terhubung ke WebSocket!")
 
-	// rdb := redis.NewClient(&redis.Options{
-	// 	Addr: fmt.Sprintf("%s:6379", redisHost),
-	// })
+		// Kirim pesan selamat datang
+		c.WriteMessage(websocket.TextMessage, []byte("Selamat datang di Signal Chat WS!"))
 
-	// if err := rdb.Ping(ctx).Err(); err != nil {
-	// 	log.Printf("⚠️ Redis belum aktif: %v", err)
-	// } else {
-	// 	fmt.Println("✅ Terhubung ke Redis!")
-	// }
+		for {
+			mt, msg, err := c.ReadMessage()
+			if err != nil {
+				fmt.Println("Client terputus:", err)
+				break
+			}
+			fmt.Printf("Pesan diterima: %s\n", msg)
 
-	// // 3. Server Sederhana
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Fprintf(w, "Backend Chat System Is Running!")
-	// })
+			// Echo: Kirim balik pesan ke client
+			c.WriteMessage(mt, msg)
+		}
+	}))
 
-	// fmt.Println("🚀 Server jalan di port 8080")
-	// log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server Backend jalan di http://localhost:8080")
+	app.Listen(":8080")
 }
