@@ -16,30 +16,11 @@ const jwtSecret = "rahasia123"
 func main() {
 	app := fiber.New()
 
-<<<<<<< HEAD
 	// CORS Setup: SANGAT PENTING untuk HttpOnly Cookie
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000, http://127.0.0.1:3000", // Sesuaikan jika dites di Web
 		AllowHeaders:     "Origin, Content-Type, Accept",
 		AllowCredentials: true, // Wajib true agar cookie bisa lewat
-=======
-	// ── KONFIGURASI CORS FINAL (Sinkron dengan Flutter withCredentials) ──
-	app.Use(cors.New(cors.Config{
-		// Wajib mencantumkan http://localhost:3000 tempat Flutter Web berjalan
-		AllowOrigins: "http://localhost:3000, http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080",
-
-		// Wajib ada OPTIONS (untuk preflight Chrome) dan PATCH (untuk update profil)
-		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-
-		// Wajib izinkan Cookie dan Authorization
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With",
-
-		// Bumbu Rahasia: Beri tahu Chrome bahwa server mengirim Cookie
-		ExposeHeaders: "Set-Cookie",
-
-		// KUNCI UTAMA: Wajib true agar browser mau simpan cookie dari server
-		AllowCredentials: true,
->>>>>>> a533654 (memperbarui set cookie)
 	}))
 	// ──────────────────────────────────────────────────────────────────────
 
