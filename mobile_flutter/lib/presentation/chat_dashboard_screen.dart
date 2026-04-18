@@ -9,8 +9,8 @@ import 'package:mobile_flutter/presentation/widgets/navbar.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
 =======
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_channel/io.dart'; // Wajib untuk platform native (Linux/Android)
-import 'dart:io' show Platform; // Untuk deteksi OS
+import 'package:web_socket_channel/io.dart'; 
+import 'dart:io' show Platform;
 import 'setting_page.dart';
 import '../theme/theme_controller.dart';
 import '../services/api_client.dart';
@@ -45,60 +45,46 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _initWS(); // Inisialisasi koneksi WebSocket menggunakan Cookie
+    _initWS(); // Panggil fungsi koneksi WebSocket
   }
 
   void _initWS() async {
     try {
       final cookieString = await ApiClient().getCookieHeader();
+      print("🕵️ CEK COOKIE DI LINUX: $cookieString");
       
-      // LOGIKA OTOMATIS: 
-      // 1. Web -> localhost
-      // 2. Android Emulator -> 10.0.2.2
-      // 3. Linux Desktop -> 127.0.0.1
-      String ipAddress = "127.0.0.1";
-      if (kIsWeb) {
-        ipAddress = "localhost";
-      } else if (Platform.isAndroid) {
-        ipAddress = "10.0.2.2";
-      }
+      // LOGIKA OTOMATIS: Android pakai 10.0.2.2, Linux/Windows pakai 127.0.0.1
+      String ipAddress = Platform.isAndroid ? "10.0.2.2" : "127.0.0.1";
+      final wsUrl = Uri.parse("ws://$ipAddress:8080/ws"); 
       
-      final wsUrl = Uri.parse("ws://$ipAddress:8080/ws");
-
-      debugPrint("🕵️ Mencoba koneksi WS dengan Cookie: $cookieString");
-
-      if (kIsWeb) {
-        // DI WEB: Browser mengurus cookie secara otomatis
-        _channel = WebSocketChannel.connect(wsUrl);
-      } else {
-        // DI NATIVE: Suntikkan Cookie ke header handshake
-        _channel = IOWebSocketChannel.connect(
-          wsUrl,
-          headers: {
-            if (cookieString != null && cookieString.isNotEmpty) 'Cookie': cookieString,
-          },
-        );
-      }
+      // Menggunakan IOWebSocketChannel untuk melempar Cookie (Khusus Linux/Android/iOS)
+      _channel = IOWebSocketChannel.connect(
+        wsUrl,
+        headers: {
+          if (cookieString != null && cookieString.isNotEmpty) 'Cookie': cookieString,
+        },
+      );
 
       _channel?.stream.listen(
         (message) {
-          debugPrint("Pesan masuk dari WS: $message");
+          print("Pesan masuk dari WS: $message");
+          // Logic update list chat atau database nanti bisa ditaruh di sini
         },
         onError: (error) {
-          debugPrint("Error WebSocket: $error");
+          print("Error WebSocket: $error");
         },
         onDone: () {
-          debugPrint("Koneksi WebSocket terputus.");
+          print("Koneksi WebSocket terputus.");
         }
       );
     } catch (e) {
-      debugPrint("Gagal inisialisasi WebSocket: $e");
+      print("Gagal inisialisasi WebSocket: $e");
     }
   }
 
   @override
   void dispose() {
-    _channel?.sink.close(); 
+    _channel?.sink.close();
     super.dispose();
   }
 >>>>>>> b7253ac (testing http cookie implement)
