@@ -14,14 +14,22 @@ import (
 	swagger "github.com/swaggo/fiber-swagger"
 )
 
-// @title Webchat API
-// @version 1.0
-// @description API WEBCHAT
-// @host localhost:8080
-// @BasePath /api
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
+// @title           Webchat
+// @version         1.0
+// @description     API WEBCHAT
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name    Arya Prodigy
+// @contact.email   arya@example.com
+
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Masukkan token dengan format: Bearer <token_kamu>
+
+// @host            localhost:8080
+// @BasePath        /api
+// @schemes         http
 func main() {
 	config.LoadEnv()
 	config.ConnectDatabase()

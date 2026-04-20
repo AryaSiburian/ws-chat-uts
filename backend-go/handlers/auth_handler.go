@@ -59,7 +59,7 @@ func Register(c *fiber.Ctx) error {
 // @Produce      json
 // @Param        login  body      model.LoginRequest  true  "Username & Password"
 // @Success      200    {object}  map[string]string
-// @Router /api/auth/login [post]
+// @Router /auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
 	var user model.User

@@ -16,7 +16,7 @@ import (
 // @Produce      json
 // @Success      200  {object}  map[string]interface{} "Success response"
 // @Failure      500  {object}  model.ErrorResponse
-// @Router       /api/users [get]
+// @Router       /users [get]
 func GetUsers(c *fiber.Ctx) error {
 	var users []model.User
 

@@ -21,7 +21,6 @@ func SetupRoutes(app *fiber.App) {
 
 	// --- RUTE UPDATE PROFILE (Level Utama) ---
 	// Agar sinkron dengan Flutter: http://localhost:8080/patch/update/:id
-	app.Patch("/patch/update/:id", handlers.UpdateProfileByID)
 
 	// --- GRUP API ---
 	api := app.Group("/api")
@@ -37,6 +36,7 @@ func SetupRoutes(app *fiber.App) {
 	// Profile (Milik User Sendiri)
 	profile.Get("/me", handlers.GetMyProfile)
 	profile.Patch("/me", handlers.UpdateMyProfile)
+	profile.Patch("/update/:id", handlers.UpdateProfileByID)
 
 	// Users (Admin/General)
 	user.Get("/", handlers.GetUsers)

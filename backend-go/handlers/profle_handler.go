@@ -48,8 +48,7 @@ func GetMyProfile(c *fiber.Ctx) error {
 // @Failure      400      {object}  model.ErrorResponse
 // @Failure      401      {object}  model.ErrorResponse
 // @Failure      404      {object}  model.ErrorResponse
-// @Router       /api/profile/me [patch]
-
+// @Router       /profile/me [patch]
 func UpdateMyProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 	var req model.UpdateProfileRequest
@@ -80,6 +79,19 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "profile updated", "data": profile})
 }
 
+// UpdateProfileByID godoc
+// @Summary      Update User Profile
+// @Description  Memperbarui username, bio, atau avatar berdasarkan User ID
+// @Tags         Profile
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id       path      string                      true  "User UUID"
+// @Param        profile  body      model.UpdateProfileRequest  true  "Update Profile Data"
+// @Success      200      {object}  map[string]interface{}      "Berhasil memperbarui profil"
+// @Failure      400      {object}  map[string]interface{}      "Format ID atau Request tidak valid"
+// @Failure      500      {object}  map[string]interface{}      "Internal Server Error"
+// @Router       /profile/update/{id} [patch]
 func UpdateProfileByID(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	userID, err := uuid.Parse(idParam)

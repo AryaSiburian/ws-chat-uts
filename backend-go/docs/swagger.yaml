@@ -38,14 +38,26 @@ definitions:
     - password
     - username
     type: object
+  model.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      username:
+        type: string
+    type: object
 host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: arya@example.com
+    name: Arya Prodigy
   description: API WEBCHAT
-  title: Webchat API
+  termsOfService: http://swagger.io/terms/
+  title: Webchat
   version: "1.0"
 paths:
-  /api/auth/login:
+  /auth/login:
     post:
       consumes:
       - application/json
@@ -69,26 +81,6 @@ paths:
       summary: Login User
       tags:
       - Auth
-  /api/users:
-    get:
-      consumes:
-      - application/json
-      description: Mengambil daftar semua user (tanpa detail)
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      summary: Get semua user
-      tags:
-      - Users
   /auth/register:
     post:
       consumes:
@@ -138,6 +130,101 @@ paths:
       summary: Get My Profile
       tags:
       - Profile
+    patch:
+      consumes:
+      - application/json
+      description: Update username, bio, atau avatar user yang sedang login
+      parameters:
+      - description: Update Profile Data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update My Profile
+      tags:
+      - Profile
+  /profile/update/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Memperbarui username, bio, atau avatar berdasarkan User ID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Profile Data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Berhasil memperbarui profil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Format ID atau Request tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Profile
+      tags:
+      - Profile
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua user (tanpa detail)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get semua user
+      tags:
+      - Users
   /users/{id}:
     get:
       consumes:
@@ -168,8 +255,11 @@ paths:
       summary: Get detail user
       tags:
       - Users
+schemes:
+- http
 securityDefinitions:
   BearerAuth:
+    description: 'Masukkan token dengan format: Bearer <token_kamu>'
     in: header
     name: Authorization
     type: apiKey
