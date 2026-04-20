@@ -14,6 +14,14 @@ import (
 	swagger "github.com/swaggo/fiber-swagger"
 )
 
+// @title Webchat API
+// @version 1.0
+// @description API WEBCHAT
+// @host localhost:8080
+// @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	config.LoadEnv()
 	config.ConnectDatabase()

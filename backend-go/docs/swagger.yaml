@@ -38,26 +38,14 @@ definitions:
     - password
     - username
     type: object
-  model.UpdateProfileRequest:
-    properties:
-      avatar:
-        type: string
-      bio:
-        type: string
-      username:
-        type: string
-    type: object
 host: localhost:8080
 info:
-  contact:
-    email: arya@example.com
-    name: Arya Prodigy
+  contact: {}
   description: API WEBCHAT
-  termsOfService: http://swagger.io/terms/
-  title: Webchat
+  title: Webchat API
   version: "1.0"
 paths:
-  /auth/login:
+  /api/auth/login:
     post:
       consumes:
       - application/json
@@ -81,6 +69,26 @@ paths:
       summary: Login User
       tags:
       - Auth
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua user (tanpa detail)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get semua user
+      tags:
+      - Users
   /auth/register:
     post:
       consumes:
@@ -130,61 +138,6 @@ paths:
       summary: Get My Profile
       tags:
       - Profile
-    patch:
-      consumes:
-      - application/json
-      description: Update username, bio, atau avatar user yang sedang login
-      parameters:
-      - description: Update Profile Data
-        in: body
-        name: profile
-        required: true
-        schema:
-          $ref: '#/definitions/model.UpdateProfileRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.ProfileResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Update My Profile
-      tags:
-      - Profile
-  /users:
-    get:
-      consumes:
-      - application/json
-      description: Mengambil daftar semua user (tanpa detail)
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ErrorResponse'
-      summary: Get semua user
-      tags:
-      - Users
   /users/{id}:
     get:
       consumes:
@@ -215,11 +168,8 @@ paths:
       summary: Get detail user
       tags:
       - Users
-schemes:
-- http
 securityDefinitions:
   BearerAuth:
-    description: 'Masukkan token dengan format: Bearer <token_kamu>'
     in: header
     name: Authorization
     type: apiKey

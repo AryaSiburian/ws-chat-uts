@@ -10,6 +10,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetMyProfile godoc
+// @Summary      Get My Profile
+// @Description  Mengambil data profile user yang sedang login (berdasarkan JWT)
+// @Tags         Profile
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  model.ProfileResponse
+// @Failure      401  {object}  model.ErrorResponse
+// @Failure      404  {object}  model.ErrorResponse
+// @Router       /profile/me [get]
 func GetMyProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)
 	var profile model.Profile
@@ -24,6 +35,20 @@ func GetMyProfile(c *fiber.Ctx) error {
 		"avatar":   profile.Avatar,
 	})
 }
+
+// UpdateMyProfile godoc
+// @Summary      Update My Profile
+// @Description  Update username, bio, atau avatar user yang sedang login
+// @Tags         Profile
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        profile  body      model.UpdateProfileRequest  true  "Update Profile Data"
+// @Success      200      {object}  model.ProfileResponse
+// @Failure      400      {object}  model.ErrorResponse
+// @Failure      401      {object}  model.ErrorResponse
+// @Failure      404      {object}  model.ErrorResponse
+// @Router       /api/profile/me [patch]
 
 func UpdateMyProfile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uuid.UUID)

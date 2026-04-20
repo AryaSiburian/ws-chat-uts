@@ -12,6 +12,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Register godoc
+// @Summary Daftar User WebSystem
+// @Description Membuat akun baru untuk mengakses API yang diproteksi
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user body model.RegisterRequest true "Username & Password"
+// @Success 201 {object} map[string]string
+// @Router /auth/register [post]
 func Register(c *fiber.Ctx) error {
 	var req model.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -42,6 +51,15 @@ func Register(c *fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{"message": "Register berhasil", "user_id": user.ID})
 }
 
+// Login godoc
+// @Summary      Login User
+// @Description  Masukan username & password untuk mendapatkan token JWT
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        login  body      model.LoginRequest  true  "Username & Password"
+// @Success      200    {object}  map[string]string
+// @Router /api/auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
 	var user model.User
