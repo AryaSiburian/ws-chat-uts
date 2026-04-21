@@ -22,13 +22,35 @@ import (
 // @Failure      404  {object}  model.ErrorResponse
 // @Router       /profile/me [get]
 func GetMyProfile(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(uuid.UUID)
-	var profile model.Profile
-
-	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"message": "profile tidak ditemukan"})
+	// 1. Ambil dari locals
+	rawID := c.Locals("user_id")
+	if rawID == nil {
+		return c.Status(401).JSON(fiber.Map{"message": "Sesi tidak ditemukan (Locals Empty)"})
 	}
 
+	// 2. Casting ke uuid.UUID (pastikan import "github.com/google/uuid")
+	userID, ok := rawID.(uuid.UUID)
+	if !ok {
+		return c.Status(500).JSON(fiber.Map{"message": "Terjadi kesalahan tipe data ID di server"})
+	}
+
+	var profile model.Profile
+	// 3. Cari di database
+	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		// Jika profile belum ada di DB, buatkan otomatis supaya Flutter tidak error 404
+		profile = model.Profile{
+			ID:       uuid.New(),
+			UserID:   userID,
+			Username: "User_" + userID.String()[:5],
+			Bio:      "Mahasiswa IT Chat App",
+		}
+
+		if errCreate := config.DB.Create(&profile).Error; errCreate != nil {
+			return c.Status(500).JSON(fiber.Map{"message": "Gagal membuat profil default"})
+		}
+	}
+
+	// 4. Kirim response
 	return c.JSON(fiber.Map{
 		"username": profile.Username,
 		"bio":      profile.Bio,

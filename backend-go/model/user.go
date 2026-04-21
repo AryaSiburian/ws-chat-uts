@@ -15,11 +15,11 @@ type User struct {
 }
 
 type Profile struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserID   uuid.UUID `gorm:"type:uuid;uniqueIndex"`
-	Username string    `gorm:"unique;not null"` // <-- INI YANG TYPO SEBELUMNYA SUDAH DIPERBAIKI
-	Bio      string
-	Avatar   string
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID   uuid.UUID `gorm:"type:uuid;uniqueIndex" json:"user_id"`
+	Username string    `gorm:"unique;not null" json:"username"`
+	Bio      string    `json:"bio"`
+	Avatar   string    `json:"avatar"`
 }
 
 type RegisterRequest struct {
