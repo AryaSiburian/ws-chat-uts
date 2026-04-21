@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile_flutter/services/api_client.dart'; // Import ApiClient
-import 'presentation/splash_screen.dart';
+import 'package:provider/provider.dart';
+
+// Import internal project kamu
+import 'package:mobile_flutter/services/api_client.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
+import 'package:mobile_flutter/provider/profile_providers.dart'; // Pastikan path ini benar
+import 'package:mobile_flutter/presentation/splash_screen.dart';
 
 void main() async {
+  // 1. Memastikan binding Flutter sudah siap sebelum menjalankan fungsi async
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inisialisasi Service Global
   await ThemeController.init(); 
-  await ApiClient().init(); // <--- INISIALISASI COOKIE MANAGER
-  runApp(const MyApp());
+  await ApiClient().init(); 
+
+  runApp(
+    // 3. Bungkus aplikasi dengan MultiProvider
+    MultiProvider(
+      providers: [
+        // Daftarkan ProfileProvider agar bisa diakses di semua halaman
+        ChangeNotifierProvider(
+          // Operator .. (cascade) digunakan untuk langsung memanggil initLocalData 
+          // tepat setelah objek dibuat.
+          create: (_) => ProfileProvider()..initLocalData(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -16,30 +37,40 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 4. Sinkronisasi Tema
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeController.themeNotifier,
       builder: (_, mode, __) {
         return MaterialApp(
-          title: 'Signal',
+          title: 'Chatup',
           debugShowCheckedModeBanner: false,
           themeMode: mode,
 
+          // Konfigurasi Tema Terang
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2C6BED), brightness: Brightness.light),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2C6BED), 
+              brightness: Brightness.light
+            ),
             scaffoldBackgroundColor: const Color(0xFFFFFFFF),
             textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
           ),
 
+          // Konfigurasi Tema Gelap
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2C6BED), brightness: Brightness.dark),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2C6BED), 
+              brightness: Brightness.dark
+            ),
             scaffoldBackgroundColor: const Color(0xFF121212),
             textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
           ),
 
+          // Halaman Pertama yang Muncul
           home: const SplashScreen(),
         );
       },

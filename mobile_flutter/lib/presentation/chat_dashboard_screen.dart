@@ -6,7 +6,7 @@ import 'package:web_socket_channel/io.dart'; // Untuk Native
 import 'dart:io' show Platform; // Untuk cek OS
 
 import 'package:mobile_flutter/model/chat_user.dart';
-import 'package:mobile_flutter/presentation/setting_page.dart';
+import 'package:mobile_flutter/presentation/settings/setting_page.dart';
 import 'package:mobile_flutter/presentation/widgets/chat_detail.dart';
 import 'package:mobile_flutter/presentation/widgets/chat_list.dart';
 import 'package:mobile_flutter/presentation/widgets/navbar.dart';
