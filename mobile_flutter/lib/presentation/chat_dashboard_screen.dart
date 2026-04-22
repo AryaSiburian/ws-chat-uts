@@ -11,7 +11,7 @@ import 'package:mobile_flutter/presentation/widgets/chat_detail.dart';
 import 'package:mobile_flutter/presentation/widgets/chat_list.dart';
 import 'package:mobile_flutter/presentation/widgets/navbar.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
-import 'package:mobile_flutter/services/api_client.dart'; // Ambil cookie
+import 'package:mobile_flutter/services/api_client.dart';
 
 const _kBlue = Color(0xFF2C6BED);
 const _kDarkBg = Color(0xFF121212);
@@ -45,7 +45,7 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
 
   void _initWS() async {
     try {
-      final cookieString = await ApiClient().getCookieHeader();
+      
       
       String ipAddress = "127.0.0.1";
       if (kIsWeb) {
@@ -55,7 +55,7 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
       }
       
       final wsUrl = Uri.parse("ws://$ipAddress:8080/ws");
-      debugPrint("🕵️ WS Connect: $cookieString");
+      final accessToken = await ApiClient().getAccessToken();
 
       if (kIsWeb) {
         _channel = WebSocketChannel.connect(wsUrl);
@@ -63,7 +63,8 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
         _channel = IOWebSocketChannel.connect(
           wsUrl,
           headers: {
-            if (cookieString != null && cookieString.isNotEmpty) 'Cookie': cookieString,
+            if (accessToken != null && accessToken.isNotEmpty)
+              'Authorization': 'Bearer $accessToken',
           },
         );
       }

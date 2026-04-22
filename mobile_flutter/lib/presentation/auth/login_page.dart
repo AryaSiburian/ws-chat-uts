@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register_page.dart';
 import '../chat_dashboard_screen.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
-
-const kBaseUrl = 'http://localhost:8080';
+import 'package:mobile_flutter/services/api_client.dart';
 
 const kSignalBlue       = Color(0xFF2C6BED);
 const kSignalBlueDark   = Color(0xFF1A56D6);
@@ -33,47 +30,65 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _login() async {
-    if (_emailCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
-      setState(() => _error = 'Email dan password wajib diisi');
-      return;
-    }
-    setState(() { _loading = true; _error = null; });
-    try {
-      final res = await http.post(
-        Uri.parse('$kBaseUrl/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email':    _emailCtrl.text.trim(),
-          'password': _passwordCtrl.text,
-        }),
-      );
-      
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      
-      if (res.statusCode == 200) {
-        final prefs = await SharedPreferences.getInstance();
-        
-        // Menggunakan .toString() untuk menghindari error tipe data dynamic
-        await prefs.setString('token', data['token']?.toString() ?? '');
-        await prefs.setString('user_id', data['user_id']?.toString() ?? '');
-        await prefs.setString('email', _emailCtrl.text.trim());
-        
-        if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const ChatDashboardScreen()),
-          (route) => false,
-        );
-      } else {
-        setState(() => _error =
-            data['Message'] ?? data['message'] ?? 'Login gagal');
-      }
-    } catch (e) {
-      setState(() => _error = 'Terjadi Kesalahan Koneksi.');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  if (_emailCtrl.text.trim().isEmpty || _passwordCtrl.text.isEmpty) {
+    setState(() => _error = 'Email dan password wajib diisi');
+    return;
   }
+
+  setState(() {
+    _loading = true;
+    _error = null;
+  });
+
+  try {
+    // Perbaikan kurung di sini: sebelumnya ada extra ')' setelah post()
+    final res = await ApiClient().dio.post(
+      '/api/auth/login',
+      data: {
+        'email': _emailCtrl.text.trim(),
+        'password': _passwordCtrl.text,
+      },
+    );
+
+    final data = res.data as Map<String, dynamic>;
+
+    if (res.statusCode == 200) {
+      // Mengambil token dengan fallback yang aman
+      final accessToken = (data['access_token'] ?? data['token'])?.toString() ?? '';
+      final refreshToken = data['refresh_token']?.toString() ?? '';
+
+      if (accessToken.isEmpty) {
+        setState(() => _error = 'Token login tidak valid');
+        return;
+      }
+
+      // Pastikan method ini ada di ApiClient Anda
+      await ApiClient().saveAuthTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id', data['user_id']?.toString() ?? '');
+      await prefs.setString('email', _emailCtrl.text.trim());
+
+      if (!mounted) return;
+      
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const ChatDashboardScreen()),
+        (route) => false,
+      );
+    } else {
+      setState(() => _error = data['Message'] ?? data['message'] ?? 'Login gagal');
+    }
+  } catch (e) {
+    // Menampilkan error asli jika perlu untuk debugging: e.toString()
+    setState(() => _error = 'Terjadi Kesalahan Koneksi.');
+  } finally {
+    if (mounted) setState(() => _loading = false);
+  }
+}
 
   @override
   Widget build(BuildContext context) {

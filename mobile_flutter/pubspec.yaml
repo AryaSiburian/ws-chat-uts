@@ -15,12 +15,8 @@ dependencies:
   intl: ^0.20.2
   google_fonts: ^8.0.2
   lottie: ^3.3.3
-  shared_preferences: ^2.3.2
-  # Package untuk HttpOnly Cookie
+  shared_preferences: ^2.5.5
   dio: ^5.4.0
-  dio_cookie_manager: ^3.1.1
-  cookie_jar: ^4.0.8
-  path_provider: ^2.1.2
   provider: ^6.1.5+1
 
 dev_dependencies:
