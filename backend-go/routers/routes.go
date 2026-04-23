@@ -37,6 +37,7 @@ func SetupRoutes(app *fiber.App) {
 	profile.Get("/me", handlers.GetMyProfile)
 	profile.Patch("/me", handlers.UpdateMyProfile)
 	profile.Patch("/update/:id", handlers.UpdateProfileByID)
+	profile.Patch("/avatar", handlers.UpdateAvatar)
 
 	// Users (Admin/General)
 	user.Get("/", handlers.GetUsers)

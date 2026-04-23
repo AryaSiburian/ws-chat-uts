@@ -105,6 +105,45 @@ paths:
       summary: Daftar User WebSystem
       tags:
       - Auth
+  /profile/avatar:
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Upload dan update avatar user yang sedang login
+      parameters:
+      - description: Avatar Image (jpg/png)
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Avatar
+      tags:
+      - Profile
   /profile/me:
     get:
       consumes:

@@ -1,6 +1,11 @@
+import 'package:flutter/material.dart'; 
 import 'package:lottie/lottie.dart';
-import 'package:flutter/material.dart';
-import 'auth/login_page.dart'; 
+import 'package:provider/provider.dart';
+
+import 'package:mobile_flutter/presentation/auth/login_page.dart';
+import 'package:mobile_flutter/presentation/chat_dashboard_screen.dart';
+import 'package:mobile_flutter/provider/profile_providers.dart';
+import 'package:mobile_flutter/services/api_client.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,14 +17,28 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => LoginPage()), 
-        );
-      }
-    });
+     _bootstrapSession();
+  }
+
+  Future<void> _bootstrapSession() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    final token = await ApiClient().getAccessToken();
+    final hasToken = token != null && token.isNotEmpty;
+
+    if (hasToken) {
+      await context.read<ProfileProvider>().initLocalData();
+      await context.read<ProfileProvider>().fetchProfile();
+    }
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => hasToken ? const ChatDashboardScreen() : const LoginPage(),
+      ),
+    );
   }
 
   @override

@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"backend-go/model"
+	"path/filepath"
 	"strings"
 
 	"backend-go/config"
+
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -99,6 +102,80 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "profile updated", "data": profile})
+}
+
+// UpdateAvatar godoc
+// @Summary      Update Avatar
+// @Description  Upload dan update avatar user yang sedang login
+// @Tags         Profile
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        avatar  formData  file  true  "Avatar Image (jpg/png)"
+// @Success      200     {object}  model.ProfileResponse
+// @Failure      400     {object}  model.ErrorResponse
+// @Failure      401     {object}  model.ErrorResponse
+// @Failure      404     {object}  model.ErrorResponse
+// @Failure      500     {object}  model.ErrorResponse
+// @Router       /profile/avatar [patch]
+func UpdateAvatar(c *fiber.Ctx) error {
+
+	rawUser := c.Locals("user_id")
+	if rawUser == nil {
+		return c.Status(401).JSON(fiber.Map{"message": "unauthorized"})
+	}
+
+	userID := rawUser.(uuid.UUID)
+
+	file, err := c.FormFile("avatar")
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "file avatar wajib diisi",
+		})
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "format file harus jpg/jpeg/png",
+		})
+	}
+
+	if file.Size > 2*1024*1024 {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "ukuran file maksimal 2MB",
+		})
+	}
+
+	var profile model.Profile
+	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "profile tidak ditemukan",
+		})
+	}
+
+	filename := userID.String() + "_" + uuid.New().String() + ext
+	c.SaveFile(file, "./uploads/"+filename)
+
+	if err := os.MkdirAll("./uploads", os.ModePerm); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "gagal membuat folder uploads",
+		})
+	}
+
+	avatarURL := "/uploads/" + filename
+
+	profile.Avatar = avatarURL
+	if err := config.DB.Save(&profile).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "gagal update avatar",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "avatar berhasil diupdate",
+		"avatar":  avatarURL,
+	})
 }
 
 // UpdateProfileByID godoc

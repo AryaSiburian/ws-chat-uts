@@ -50,6 +50,8 @@ func main() {
 
 	app.Use(logger.New())
 
+	app.Static("/uploads", "./uploads")
+
 	routers.SetupRoutes(app)
 
 	app.Get("/swagger/*", swagger.WrapHandler)

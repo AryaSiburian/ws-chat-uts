@@ -89,8 +89,9 @@ func Login(c *fiber.Ctx) error {
 	c.Cookie(cookie)
 
 	return c.JSON(fiber.Map{
-		"message": "Login berhasil",
-		"token":   t,
-		"user_id": user.ID,
+		"message":       "Login berhasil",
+		"access_token":  t,
+		"refresh_token": t,
+		"user_id":       user.ID,
 	})
 }
