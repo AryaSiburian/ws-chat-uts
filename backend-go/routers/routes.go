@@ -32,6 +32,7 @@ func SetupRoutes(app *fiber.App) {
 	// Auth
 	auth.Post("/register", handlers.Register)
 	auth.Post("/login", handlers.Login)
+	auth.Post("/refresh", handlers.RefreshToken)
 
 	// Profile (Milik User Sendiri)
 	profile.Get("/me", handlers.GetMyProfile)

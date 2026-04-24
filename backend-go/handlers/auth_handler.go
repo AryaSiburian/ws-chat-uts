@@ -63,35 +63,83 @@ func Register(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 	var req model.LoginRequest
 	var user model.User
+
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Gagal parsing data"})
 	}
+
 	if err := config.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Email tidak ditemukan"})
 	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Password salah"})
 	}
-	claims := jwt.MapClaims{
+
+	accessSecret := config.GetEnv("JWT_ACCESS_SECRET")
+	refreshSecret := config.GetEnv("JWT_REFRESH_SECRET")
+
+	accessClaims := jwt.MapClaims{
 		"user_id": user.ID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		"exp":     time.Now().Add(15 * time.Minute).Unix(),
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secretkey := config.GetEnv("JWT_SECRET")
-	t, _ := token.SignedString([]byte(secretkey))
+	atToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
+	at, _ := atToken.SignedString([]byte(accessSecret))
+
+	refreshClaims := jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
+	}
+	rtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	rt, _ := rtToken.SignedString([]byte(refreshSecret))
 
 	cookie := new(fiber.Cookie)
-	cookie.Name = "token"
-	cookie.Value = t
-	cookie.Expires = time.Now().Add(72 * time.Hour)
+	cookie.Name = "refresh_token"
+	cookie.Value = rt
+	cookie.Expires = time.Now().Add(7 * 24 * time.Hour)
 	cookie.HTTPOnly = true
 	cookie.SameSite = "Lax"
 	c.Cookie(cookie)
 
 	return c.JSON(fiber.Map{
 		"message":       "Login berhasil",
-		"access_token":  t,
-		"refresh_token": t,
+		"access_token":  at,
+		"refresh_token": rt,
 		"user_id":       user.ID,
+	})
+}
+
+// Refresh godoc
+// @Summary      Refresh Access Token
+// @Description  Menghasilkan access token baru menggunakan refresh token dari cookie
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Router       /auth/refresh [post]
+func RefreshToken(c *fiber.Ctx) error {
+	rt := c.Cookies("refresh_token")
+
+	token, err := jwt.Parse(rt, func(token *jwt.Token) (interface{}, error) {
+		return []byte(config.GetEnv("JWT_SECRET")), nil
+	})
+
+	if err != nil || !token.Valid {
+		return c.Status(401).JSON(fiber.Map{"message": "Invalid refresh token"})
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+
+	newClaims := jwt.MapClaims{
+		"user_id": claims["user_id"],
+		"exp":     time.Now().Add(15 * time.Minute).Unix(),
+	}
+
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+	at, _ := newToken.SignedString([]byte(config.GetEnv("JWT_SECRET")))
+
+	return c.JSON(fiber.Map{
+		"access_token": at,
 	})
 }
