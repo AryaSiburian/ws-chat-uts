@@ -53,7 +53,7 @@ class ProfileProvider with ChangeNotifier {
 
     try {
       // Menggunakan Dio instance dari ApiClient agar lebih konsisten
-      final response = await ApiClient().dio.patch('api/profile/update/$_userId', data: {
+      final response = await ApiClient().dio.patch('/api/profile/update/$_userId', data: {
         'username': name,
         'bio': bio,
         'avatar': avatar,

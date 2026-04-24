@@ -17,6 +17,7 @@ class ThemeController {
     final prefs = await SharedPreferences.getInstance();
     final nowDark = themeNotifier.value == ThemeMode.dark;
     themeNotifier.value = nowDark ? ThemeMode.light : ThemeMode.dark;
+    print("THEME DEBUG: Switched to ${themeNotifier.value}");
     await prefs.setBool('isDark', !nowDark);
   }
 

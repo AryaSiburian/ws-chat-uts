@@ -92,6 +92,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+    valueListenable: ThemeController.themeNotifier,
+    builder: (context, mode, child) {
     final isDark = ThemeController.isDark;
     final bg     = isDark ? const Color(0xFF121212) : Colors.white;
     final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -274,6 +277,8 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
+    );
+  }
     );
   }
 
