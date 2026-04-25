@@ -40,7 +40,7 @@ func main() {
 
 	// ── KONFIGURASI CORS FINAL (Sinkron dengan Flutter withCredentials) ──
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000, http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080",
+		AllowOrigins:     "http://localhost:3000,http://127.0.0.1:3000, http://localhost:8080, http://10.0.2.2:8080",
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Cookie, X-Requested-With",
 		ExposeHeaders:    "Set-Cookie",

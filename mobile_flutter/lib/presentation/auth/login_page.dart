@@ -92,18 +92,19 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-    valueListenable: ThemeController.themeNotifier,
-    builder: (context, mode, child) {
+   
     final isDark = ThemeController.isDark;
-    final bg     = isDark ? const Color(0xFF121212) : Colors.white;
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final textColor  = isDark ? Colors.white : const Color(0xFF1B1B1B);
-    final hintColor  = isDark ? Colors.white54 : const Color(0xFF8696A0);
-    final inputFill  = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF3F6FD);
-    final borderColor = isDark ? Colors.white12 : const Color(0xFFD1D7DB);
-    final bubbleA = isDark ? const Color(0xFF1A3A6B) : kSignalBlue;
-    final bubbleB = isDark ? const Color(0xFF0D2040) : kBlueBubble;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bg = theme.scaffoldBackgroundColor;
+    final cardBg = theme.cardColor;
+    final textColor = colorScheme.onSurface;
+    final hintColor = colorScheme.onSurfaceVariant;
+    final inputFill = colorScheme.surface.withOpacity(isDark ? 0.24 : 0.9);
+    final borderColor = colorScheme.outline.withOpacity(isDark ? 0.45 : 0.4);
+    final bubbleA = colorScheme.primary;
+    final bubbleB = colorScheme.primaryContainer;
+
 
     return Scaffold(
       backgroundColor: bg,
@@ -279,7 +280,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-    );
   }
 
   Widget _bubble(double size, Color color, {double opacity = 1}) => Container(
@@ -349,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
+
 
 class _ThemeToggle extends StatelessWidget {
   final bool isDark;

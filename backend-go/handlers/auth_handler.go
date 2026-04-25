@@ -122,7 +122,7 @@ func RefreshToken(c *fiber.Ctx) error {
 	rt := c.Cookies("refresh_token")
 
 	token, err := jwt.Parse(rt, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.GetEnv("JWT_SECRET")), nil
+		return []byte(config.GetEnv("JWT_REFRESH_SECRET")), nil
 	})
 
 	if err != nil || !token.Valid {
@@ -137,7 +137,7 @@ func RefreshToken(c *fiber.Ctx) error {
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
-	at, _ := newToken.SignedString([]byte(config.GetEnv("JWT_SECRET")))
+	at, _ := newToken.SignedString([]byte(config.GetEnv("JWT_REFRESH_SECRET")))
 
 	return c.JSON(fiber.Map{
 		"access_token": at,

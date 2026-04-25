@@ -29,7 +29,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.GetEnv("JWT_SECRET")), nil
+		return []byte(config.GetEnv("JWT_ACCESS_SECRET")), nil
 	})
 
 	// Debugging: Jika masih error, print err di sini untuk lihat kenapa gagal
