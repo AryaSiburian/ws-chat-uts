@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"backend-go/model"
+	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"backend-go/config"
 
-	"os"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // GetMyProfile godoc
@@ -40,6 +41,10 @@ func GetMyProfile(c *fiber.Ctx) error {
 	var profile model.Profile
 	// 3. Cari di database
 	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(500).JSON(fiber.Map{"message": "Gagal mengambil profil"})
+		}
+
 		// Jika profile belum ada di DB, buatkan otomatis supaya Flutter tidak error 404
 		profile = model.Profile{
 			ID:       uuid.New(),
@@ -53,11 +58,14 @@ func GetMyProfile(c *fiber.Ctx) error {
 		}
 	}
 
-	// 4. Kirim response
-	return c.JSON(fiber.Map{
-		"username": profile.Username,
-		"bio":      profile.Bio,
-		"avatar":   profile.Avatar,
+	if profile.Username == "" {
+		profile.Username = "User_" + userID.String()[:5]
+	}
+
+	return c.JSON(model.ProfileResponse{
+		Username: profile.Username,
+		Bio:      profile.Bio,
+		Avatar:   profile.Avatar,
 	})
 }
 
@@ -119,7 +127,6 @@ func UpdateMyProfile(c *fiber.Ctx) error {
 // @Failure      500     {object}  model.ErrorResponse
 // @Router       /profile/avatar [patch]
 func UpdateAvatar(c *fiber.Ctx) error {
-
 	rawUser := c.Locals("user_id")
 	if rawUser == nil {
 		return c.Status(401).JSON(fiber.Map{"message": "unauthorized"})
@@ -129,47 +136,38 @@ func UpdateAvatar(c *fiber.Ctx) error {
 
 	file, err := c.FormFile("avatar")
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "file avatar wajib diisi",
-		})
+		return c.Status(400).JSON(fiber.Map{"message": "file avatar wajib diisi"})
 	}
 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "format file harus jpg/jpeg/png",
-		})
+		return c.Status(400).JSON(fiber.Map{"message": "format file harus jpg/jpeg/png"})
 	}
 
-	if file.Size > 2*1024*1024 {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "ukuran file maksimal 2MB",
-		})
+	// 1. PINDAHKAN LOGIKA MKDIR KE SINI (Sebelum SaveFile)
+	uploadDir := "./uploads"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "gagal membuat folder uploads"})
 	}
 
 	var profile model.Profile
 	if err := config.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"message": "profile tidak ditemukan",
-		})
+		return c.Status(404).JSON(fiber.Map{"message": "profile tidak ditemukan"})
 	}
 
+	// 2. Tentukan nama file
 	filename := userID.String() + "_" + uuid.New().String() + ext
-	c.SaveFile(file, "./uploads/"+filename)
 
-	if err := os.MkdirAll("./uploads", os.ModePerm); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "gagal membuat folder uploads",
-		})
+	// 3. SEKARANG AMAN UNTUK SIMPAN (Karena folder sudah pasti ada)
+	if err := c.SaveFile(file, uploadDir+"/"+filename); err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "gagal menyimpan file ke server"})
 	}
 
 	avatarURL := "/uploads/" + filename
-
 	profile.Avatar = avatarURL
+
 	if err := config.DB.Save(&profile).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"message": "gagal update avatar",
-		})
+		return c.Status(500).JSON(fiber.Map{"message": "gagal update avatar di database"})
 	}
 
 	return c.JSON(fiber.Map{

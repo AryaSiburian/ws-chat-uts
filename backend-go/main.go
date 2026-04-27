@@ -34,9 +34,21 @@ func main() {
 	config.LoadEnv()
 	config.ConnectDatabase()
 
+	// --- PRO-LOGIC: AUTO CREATE UPLOADS FOLDER ---
+	uploadDir := "./uploads"
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		log.Println("📁 Folder uploads tidak ditemukan, membuat folder baru...")
+		err := os.MkdirAll(uploadDir, 0755)
+		if err != nil {
+			log.Fatal("❌ Gagal membuat folder upload: ", err)
+		}
+	}
+
 	app := fiber.New(fiber.Config{
 		AppName: "E-Library API v1.0",
 	})
+
+	app.Static("/uploads", "./uploads")
 
 	// ── KONFIGURASI CORS FINAL (Sinkron dengan Flutter withCredentials) ──
 	app.Use(cors.New(cors.Config{
@@ -49,8 +61,6 @@ func main() {
 	// ──────────────────────────────────────────────────────────────────────
 
 	app.Use(logger.New())
-
-	app.Static("/uploads", "./uploads")
 
 	routers.SetupRoutes(app)
 
