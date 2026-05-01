@@ -14,7 +14,7 @@ jobs:
           go mod tidy
           go test ./...
 
-      - run: docker build -t app ./backend
+      - run: docker build -t app ./backend-go
 
   frontend:
     runs-on: ubuntu-latest
@@ -23,6 +23,6 @@ jobs:
       - uses: subosito/flutter-action@v2
 
       - run: |
-          cd frontend
+          cd mobile_flutter
           flutter pub get
           flutter test
