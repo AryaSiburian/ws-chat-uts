@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_flutter/services/api_client.dart';
-import 'package:dio/dio.dart';
+// import 'package:dio/dio.dart';
 
 class ProfileProvider with ChangeNotifier {
   String _email = '';
