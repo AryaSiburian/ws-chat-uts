@@ -5,24 +5,29 @@ on: push
 jobs:
   backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-go
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
 
-      - run: |
-          cd backend
-          go mod tidy
-          go test ./...
+      - run: go mod tidy
+      - run: go test ./...
 
-      - run: docker build -t app ./backend-go
+      - name: Build Docker
+        run: docker build -t app .
 
   frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile_flutter
+
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
 
-      - run: |
-          cd mobile_flutter
-          flutter pub get
-          flutter test
+      - run: flutter pub get
+      - run: flutter test
