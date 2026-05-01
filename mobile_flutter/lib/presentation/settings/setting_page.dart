@@ -52,6 +52,8 @@ class _SettingPageState extends State<SettingPage> {
                 bio: bioCtrl.text,
                 avatar: avatarCtrl.text,
               );
+              if (!context.mounted) return;
+
               if (success && mounted) Navigator.pop(context);
             },
             child: const Text('Simpan'),

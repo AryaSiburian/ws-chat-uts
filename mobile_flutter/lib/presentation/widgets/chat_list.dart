@@ -76,7 +76,8 @@ class ChatListView extends StatelessWidget {
                   final isSelected = selectedChat?.id == chat.id;
 
                   return Material(
-                    color: isSelected ? _kBlue.withOpacity(isDark ? 0.18 : 0.08) : Colors.transparent,
+                    color: isSelected ? _kBlue.withValues(
+                      alpha : isDark ? 0.18 : 0.08) : Colors.transparent,
                     child: ListTile(
                       onTap: () => onChatSelected(chat),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -165,7 +166,8 @@ class _Avatar extends StatelessWidget {
     final color = _colors[name.codeUnitAt(0) % _colors.length];
     return CircleAvatar(
       radius: 26,
-      backgroundColor: color.withOpacity(isDark ? 0.85 : 0.9),
+      backgroundColor: color.withValues(
+        alpha : isDark ? 0.85 : 0.9),
       child: Text(
         name[0].toUpperCase(),
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),

@@ -26,10 +26,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final token = await ApiClient().getAccessToken();
     final hasToken = token != null && token.isNotEmpty;
 
+    final profileProv = context.read<ProfileProvider>();
     if (hasToken) {
-      await context.read<ProfileProvider>().initLocalData();
-      await context.read<ProfileProvider>().fetchProfile();
-    }
+    await profileProv.initLocalData();
+
+    if (!context.mounted) return;
+
+    await profileProv.fetchProfile();
+  }
 
     if (!mounted) return;
 

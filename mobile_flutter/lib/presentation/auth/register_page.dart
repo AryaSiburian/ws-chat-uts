@@ -153,7 +153,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+                            color: Colors.black.withValues(
+                              alpha : isDark ? 0.4 : 0.08),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),
@@ -174,7 +175,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: _kBlue.withOpacity(0.4),
+                                  color: _kBlue.withValues(
+                                    alpha : 0.4),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 )
@@ -308,7 +310,8 @@ class _RegisterPageState extends State<RegisterPage> {
         width: size, height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color.withOpacity(opacity),
+          color: color.withValues(
+            alpha : opacity),
         ),
       );
 
