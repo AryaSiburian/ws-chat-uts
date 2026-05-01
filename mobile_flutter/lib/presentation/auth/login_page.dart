@@ -100,8 +100,12 @@ class _LoginPageState extends State<LoginPage> {
     final cardBg = theme.cardColor;
     final textColor = colorScheme.onSurface;
     final hintColor = colorScheme.onSurfaceVariant;
-    final inputFill = colorScheme.surface.withOpacity(isDark ? 0.24 : 0.9);
-    final borderColor = colorScheme.outline.withOpacity(isDark ? 0.45 : 0.4);
+    final inputFill = colorScheme.surface.withValues(
+      alpha: isDark ? 0.24 : 0.9,
+    );
+    final borderColor = colorScheme.outline.withValues(
+      alpha: isDark ? 0.45 : 0.4,
+    );
     final bubbleA = colorScheme.primary;
     final bubbleB = colorScheme.primaryContainer;
 
