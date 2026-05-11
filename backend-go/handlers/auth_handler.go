@@ -29,6 +29,9 @@ func Register(c *fiber.Ctx) error {
 	if strings.TrimSpace(req.Username) == "" || !strings.Contains(req.Email, "@") || len(req.Password) < 8 {
 		return c.Status(400).JSON(fiber.Map{"message": "Validasi gagal"})
 	}
+	if len(req.Password) < 8 {
+		return c.Status(400).JSON(fiber.Map{"Message": "Password harus lebih dari 8"})
+	}
 	var existingUser model.User
 	if err := config.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
 		return c.Status(409).JSON(fiber.Map{"message": "Email sudah terdaftar"})
@@ -81,7 +84,7 @@ func Login(c *fiber.Ctx) error {
 
 	accessClaims := jwt.MapClaims{
 		"user_id": user.ID,
-		"exp":     time.Now().Add(15 * time.Minute).Unix(),
+		"exp":     time.Now().Add(60 * time.Minute).Unix(),
 	}
 	atToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	at, _ := atToken.SignedString([]byte(accessSecret))

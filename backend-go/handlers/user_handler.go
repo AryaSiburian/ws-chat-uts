@@ -4,6 +4,8 @@ import (
 	"backend-go/config"
 	"backend-go/model"
 
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -20,14 +22,21 @@ import (
 func GetUsers(c *fiber.Ctx) error {
 	var users []model.User
 
-	// ambil user + join profile (buat username)
-	if err := config.DB.Preload("Profile").Find(&users).Error; err != nil {
+	currentUserID := c.Locals("user_id")
+
+	fmt.Println("CURRENT USER ID:", currentUserID)
+
+	if err := config.DB.
+		Preload("Profile").
+		Where("id != ?", currentUserID).
+		Find(&users).Error; err != nil {
+
 		return c.Status(500).JSON(fiber.Map{
 			"message": "Gagal mengambil data user",
 		})
 	}
 
-	var result []model.UserBaseResponse
+	result := make([]model.UserBaseResponse, 0)
 
 	for _, u := range users {
 		result = append(result, model.UserBaseResponse{

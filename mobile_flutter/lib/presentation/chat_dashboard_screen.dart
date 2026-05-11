@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Untuk kIsWeb
@@ -12,6 +14,7 @@ import 'package:mobile_flutter/presentation/widgets/chat_list.dart';
 import 'package:mobile_flutter/presentation/widgets/navbar.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
 import 'package:mobile_flutter/services/api_client.dart';
+import 'package:http/http.dart' as http;
 
 const _kBlue = Color(0xFF2C6BED);
 const _kDarkBg = Color(0xFF121212);
@@ -29,23 +32,59 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   int _selectedIndex = 0;
   ChatModel? selectedChat;
   WebSocketChannel? _channel;
+   
+   List<ChatModel> _chats = [];
+  
+   Future<void> fetchUsers() async {
 
-  final List<ChatModel> _chats = [
-    ChatModel(id: '1', name: 'Eza Kadek', lastMessage: 'Golang: Bingung aku cuk', time: 'Sat'),
-    ChatModel(id: '2', name: 'Arya Programer', lastMessage: 'Kok ez banget ya', time: '3/10', unreadCount: 1),
-    ChatModel(id: '3', name: 'Tim Backend', lastMessage: 'Docker sudah jalan?', time: '10:30', unreadCount: 3),
-    ChatModel(id: '4', name: 'Flutter Dev', lastMessage: 'setState vs Provider', time: 'Mon'),
-  ];
+    final token = await ApiClient().getAccessToken();
+    
+    final response = await http.get(
+
+    Uri.parse('http://localhost:8080/api/users'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'accept': 'application/json',
+    },
+  );
+  
+  // print("STATUS CODE : ${response.statusCode}");
+  // print("BODY RESPONSE : ${response.body}");
+  if (response.statusCode == 200) {
+
+    final json = jsonDecode(response.body);
+
+    final List users = json['data'];
+    // print(json);
+    // print(json['data']);
+
+    setState(() {
+      _chats = users.map<ChatModel>((user) {
+        return ChatModel(
+          id: user['id'].toString(),
+          name: user['username'],
+          lastMessage: '',
+          time: '',
+        );
+      }).toList();
+    });
+
+    print("TOTAL CHATS : ${_chats.length}");
+  }
+}
 
   @override
-  void initState() {
-    super.initState();
-    _initWS(); // <-- PANGGIL WEBSOCKET SAAT HALAMAN DIBUKA
-  }
+    void initState() {
+      super.initState();
+
+      print("INIT STATE JALAN");
+
+      fetchUsers();
+      _initWS();
+    }
 
   void _initWS() async {
     try {
-      
       
       String ipAddress = "127.0.0.1";
       if (kIsWeb) {
