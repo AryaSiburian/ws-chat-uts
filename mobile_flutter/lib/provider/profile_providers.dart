@@ -22,7 +22,7 @@ class ProfileProvider with ChangeNotifier {
   // Load data awal dari Local Storage agar UI tidak kosong saat start
   Future<void> initLocalData() async {
     final prefs = await SharedPreferences.getInstance();
-    _email = prefs.getString('email') ?? 'pengguna@signal.com';
+    _email = prefs.getString('email') ?? '';
     _userId = prefs.getString('user_id') ?? '';
     notifyListeners();
   }
