@@ -128,6 +128,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/chat/private": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Check existing private room between users or create new one",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Get or Create Private Room",
+                "parameters": [
+                    {
+                        "description": "Target User ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateOrGetPrivateRoomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/profile/avatar": {
             "patch": {
                 "security": [
@@ -422,6 +469,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "model.CreateOrGetPrivateRoomRequest": {
+            "type": "object",
+            "properties": {
+                "target_user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "model.ErrorResponse": {
             "type": "object",
             "properties": {

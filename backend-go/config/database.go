@@ -61,6 +61,8 @@ func ConnectDatabase() {
 	database.AutoMigrate(
 		&model.User{},
 		&model.Profile{},
+		&model.ChatRoom{},
+		&model.ChatMember{},
 	)
 
 	DB = database

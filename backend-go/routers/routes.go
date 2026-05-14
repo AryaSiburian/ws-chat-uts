@@ -17,7 +17,6 @@ func SetupRoutes(app *fiber.App) {
 		}
 		return fiber.ErrUpgradeRequired
 	})
-	app.Get("/ws", websocket.New(handlers.WsHandler))
 
 	// --- RUTE UPDATE PROFILE (Level Utama) ---
 	// Agar sinkron dengan Flutter: http://localhost:8080/patch/update/:id
@@ -28,6 +27,7 @@ func SetupRoutes(app *fiber.App) {
 	auth := api.Group("/auth")
 	profile := api.Group("/profile", middleware.AuthMiddleware)
 	user := api.Group("/users", middleware.AuthMiddleware)
+	chat := api.Group("/chat", middleware.AuthMiddleware)
 
 	// Auth
 	auth.Post("/register", handlers.Register)
@@ -43,4 +43,7 @@ func SetupRoutes(app *fiber.App) {
 	// Users (Admin/General)
 	user.Get("/", handlers.GetUsers)
 	user.Get("/:id", handlers.GetUserByID)
+
+	//ChatRoom (Private)
+	chat.Post("/private", handlers.CreateOrGetPrivateRoom)
 }

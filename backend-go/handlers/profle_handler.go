@@ -144,7 +144,6 @@ func UpdateAvatar(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "format file harus jpg/jpeg/png"})
 	}
 
-	// 1. PINDAHKAN LOGIKA MKDIR KE SINI (Sebelum SaveFile)
 	uploadDir := "./uploads"
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		return c.Status(500).JSON(fiber.Map{"message": "gagal membuat folder uploads"})

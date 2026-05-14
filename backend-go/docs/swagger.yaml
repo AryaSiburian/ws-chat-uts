@@ -1,5 +1,10 @@
 basePath: /api
 definitions:
+  model.CreateOrGetPrivateRoomRequest:
+    properties:
+      target_user_id:
+        type: string
+    type: object
   model.ErrorResponse:
     properties:
       message:
@@ -128,6 +133,36 @@ paths:
       summary: Daftar User WebSystem
       tags:
       - Auth
+  /chat/private:
+    post:
+      consumes:
+      - application/json
+      description: Check existing private room between users or create new one
+      parameters:
+      - description: Target User ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrGetPrivateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get or Create Private Room
+      tags:
+      - Chat
   /profile/avatar:
     patch:
       consumes:
