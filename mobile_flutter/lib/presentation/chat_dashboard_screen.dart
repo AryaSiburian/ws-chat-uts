@@ -14,6 +14,8 @@ import 'package:mobile_flutter/presentation/widgets/chat_list.dart';
 import 'package:mobile_flutter/presentation/widgets/navbar.dart';
 import 'package:mobile_flutter/theme/theme_controller.dart';
 import 'package:mobile_flutter/services/api_client.dart';
+import 'package:mobile_flutter/services/chat_service.dart';
+import 'package:mobile_flutter/presentation/widgets/empty_chat_view.dart';
 import 'package:http/http.dart' as http;
 
 const _kBlue = Color(0xFF2C6BED);
@@ -32,6 +34,7 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
   int _selectedIndex = 0;
   ChatModel? selectedChat;
   WebSocketChannel? _channel;
+  String? selectedRoomId;
    
    List<ChatModel> _chats = [];
   
@@ -136,17 +139,35 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
     setState(() {});
   }
 
-  void _onChatSelected(ChatModel chat) {
+  Future<void> _onChatSelected(ChatModel chat) async {
+    final accessToken = await ApiClient().getAccessToken();
+    if (accessToken == null || accessToken.isEmpty) {
+      return;
+    }
+
+    final roomId = await ChatService().createPrivateService(
+      token: accessToken,
+      targetUserId: chat.id,
+    );
+
+    if (!mounted) return;
     final isMobile = MediaQuery.of(context).size.width < 600;
     if (isMobile) {
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatDetailView(isDark: ThemeController.isDark, selectedChat: chat),
+         builder: (_) => ChatDetailView(
+            isDark: ThemeController.isDark,
+            selectedChat: chat,
+            roomId: roomId,
+          ),
         ),
       );
     } else {
-      setState(() => selectedChat = chat);
+      setState(() {
+        selectedChat = chat;
+        selectedRoomId = roomId;
+      });
     }
   }
 
@@ -197,10 +218,13 @@ class _ChatDashboardScreenState extends State<ChatDashboardScreen> {
                     ),
                     Expanded(
                       flex: 5,
-                      child: ChatDetailView(
-                        isDark: isDark,
-                        selectedChat: selectedChat,
-                      ),
+                      child: selectedChat != null && selectedRoomId != null
+                          ? ChatDetailView(
+                              isDark: isDark,
+                              selectedChat: selectedChat,
+                              roomId: selectedRoomId!,
+                            )
+                          : EmptyChatView(isDark: isDark),
                     ),
                   ],
                 )

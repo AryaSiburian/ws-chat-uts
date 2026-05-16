@@ -8,10 +8,12 @@ class ChatDetailView extends StatelessWidget {
     super.key,
     required this.isDark,
     required this.selectedChat,
+    required this.roomId
   });
 
   final bool isDark;
   final ChatModel? selectedChat;
+  final String roomId;
 
   static const _kDarkBg = Color(0xFF121212);
   static const _kDarkSurface = Color(0xFF1E1E1E);
